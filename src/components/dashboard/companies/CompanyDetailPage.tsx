@@ -4,9 +4,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Building2, Heart, Users, ArrowLeftRight,
-  Plus, X, Search, Check, Mail, Phone, ExternalLink,
+  Plus, X, Search, Mail, Phone, ExternalLink,
   Wallet, TrendingUp, HandCoins, MoreHorizontal,
-  MapPin, Globe, FileText, Info,
+  MapPin, Globe, FileText, Info, UserCircle2, Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ type Charity = {
   name: string;
   abn: string;
   category: string;
-  assigned: boolean;
+  blacklisted: boolean;
 };
 
 type Transaction = {
@@ -59,16 +59,23 @@ type TeamMember = {
 };
 
 const ALL_CHARITIES: Charity[] = [
-  { id: "cancer",    name: "Cancer Council Australia",        abn: "91 130 429 061", category: "Health",        assigned: true  },
-  { id: "rspca",     name: "RSPCA Australia",                 abn: "99 668 654 249", category: "Animals",       assigned: true  },
-  { id: "salvos",    name: "The Salvation Army Australia",    abn: "57 507 607 336", category: "Community",     assigned: true  },
-  { id: "ozgreen",   name: "OzGreen",                         abn: "58 003 014 367", category: "Environment",   assigned: false },
-  { id: "redcross",  name: "Australian Red Cross",            abn: "50 169 561 394", category: "Humanitarian",  assigned: false },
-  { id: "beyondblue",name: "Beyond Blue",                     abn: "87 093 865 840", category: "Mental Health", assigned: true  },
-  { id: "wwf",       name: "WWF Australia",                   abn: "57 001 594 074", category: "Environment",   assigned: false },
-  { id: "starlight", name: "Starlight Children's Foundation", abn: "51 003 073 295", category: "Children",      assigned: false },
-  { id: "foodbank",  name: "Foodbank Australia",              abn: "34 119 962 177", category: "Hunger Relief", assigned: true  },
-  { id: "headspace", name: "headspace",                       abn: "26 137 533 843", category: "Mental Health", assigned: false },
+  { id: "cancer",    name: "Cancer Council Australia",        abn: "91 130 429 061", category: "Health",        blacklisted: false },
+  { id: "rspca",     name: "RSPCA Australia",                 abn: "99 668 654 249", category: "Animals",       blacklisted: false },
+  { id: "salvos",    name: "The Salvation Army Australia",    abn: "57 507 607 336", category: "Community",     blacklisted: false },
+  { id: "ozgreen",   name: "OzGreen",                         abn: "58 003 014 367", category: "Environment",   blacklisted: false },
+  { id: "redcross",  name: "Australian Red Cross",            abn: "50 169 561 394", category: "Humanitarian",  blacklisted: false },
+  { id: "beyondblue",name: "Beyond Blue",                     abn: "87 093 865 840", category: "Mental Health", blacklisted: false },
+  { id: "wwf",       name: "WWF Australia",                   abn: "57 001 594 074", category: "Environment",   blacklisted: true  },
+  { id: "starlight", name: "Starlight Children's Foundation", abn: "51 003 073 295", category: "Children",      blacklisted: false },
+  { id: "foodbank",  name: "Foodbank Australia",              abn: "34 119 962 177", category: "Hunger Relief", blacklisted: false },
+  { id: "headspace", name: "headspace",                       abn: "26 137 533 843", category: "Mental Health", blacklisted: true  },
+];
+
+// Charities this company has donated to, derived from TRANSACTIONS descriptions
+const DONATED_CHARITIES = [
+  { id: "cancer",     name: "Cancer Council Australia",  abn: "91 130 429 061", category: "Health",        totalDonated: 4200,  lastDonation: "5 Apr 2026"  },
+  { id: "rspca",      name: "RSPCA Australia",           abn: "99 668 654 249", category: "Animals",       totalDonated: 3100,  lastDonation: "28 Mar 2026" },
+  { id: "beyondblue", name: "Beyond Blue",               abn: "87 093 865 840", category: "Mental Health", totalDonated: 1400,  lastDonation: "15 Mar 2026" },
 ];
 
 const TRANSACTIONS: Transaction[] = [
@@ -86,23 +93,44 @@ const TEAM: TeamMember[] = [
   { id: "m3", name: "Priya Sharma",  email: "p.sharma@kfc.com.au",  role: "Viewer",   status: "invited" },
 ];
 
+const ADMIN_USERS = [
+  { id: "sa", name: "Sarah Admin",  initials: "SA", email: "sarah@goodstack.org"    },
+  { id: "jt", name: "James Taylor", initials: "JT", email: "j.taylor@goodstack.org" },
+  { id: "mp", name: "Maria Patel",  initials: "MP", email: "m.patel@goodstack.org"  },
+  { id: "rl", name: "Ryan Lee",     initials: "RL", email: "r.lee@goodstack.org"    },
+];
+
 export function CompanyDetailPage({ id }: { id: string }) {
   const [charities, setCharities] = useState(ALL_CHARITIES);
-  const [charitySearch, setCharitySearch] = useState("");
-  const [addCharityOpen, setAddCharityOpen] = useState(false);
-  const [savingCharity, setSavingCharity] = useState<string | null>(null);
+  const [blacklistOpen, setBlacklistOpen] = useState(false);
+  const [blacklistSearch, setBlacklistSearch] = useState("");
+  const [blacklistSaving, setBlacklistSaving] = useState<string | null>(null);
+  const [accountManagerId, setAccountManagerId] = useState<string>("sa");
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignSelected, setAssignSelected] = useState<string>("sa");
+  const [assignLoading, setAssignLoading] = useState(false);
 
-  const assignedCharities = charities.filter((c) => c.assigned);
-  const availableCharities = charities.filter(
-    (c) => !c.assigned && c.name.toLowerCase().includes(charitySearch.toLowerCase())
+  const blacklistedCharities = charities.filter((c) => c.blacklisted);
+  const blacklistableCharities = charities.filter(
+    (c) => !c.blacklisted && c.name.toLowerCase().includes(blacklistSearch.toLowerCase())
   );
 
-  const toggleCharity = async (charityId: string, assign: boolean) => {
-    setSavingCharity(charityId);
+  const toggleBlacklist = async (charityId: string, blacklist: boolean) => {
+    setBlacklistSaving(charityId);
     await new Promise((r) => setTimeout(r, 400));
-    setCharities((prev) => prev.map((c) => c.id === charityId ? { ...c, assigned: assign } : c));
-    setSavingCharity(null);
+    setCharities((prev) => prev.map((c) => c.id === charityId ? { ...c, blacklisted: blacklist } : c));
+    setBlacklistSaving(null);
   };
+
+  const handleAssign = async () => {
+    setAssignLoading(true);
+    await new Promise((r) => setTimeout(r, 600));
+    setAccountManagerId(assignSelected);
+    setAssignLoading(false);
+    setAssignOpen(false);
+  };
+
+  const currentManager = ADMIN_USERS.find((a) => a.id === accountManagerId);
 
   return (
     <div className="space-y-6">
@@ -135,7 +163,6 @@ export function CompanyDetailPage({ id }: { id: string }) {
                 <MoreHorizontal className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem>Edit Company Info</DropdownMenuItem>
                 <DropdownMenuItem variant="destructive">Suspend Account</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -164,7 +191,7 @@ export function CompanyDetailPage({ id }: { id: string }) {
       <Tabs defaultValue="charities">
         <TabsList className="rounded-xl bg-muted/50 p-1 h-auto gap-1">
           <TabsTrigger value="charities" className="rounded-lg text-sm px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Heart className="w-3.5 h-3.5 mr-1.5" /> Charities ({assignedCharities.length})
+            <Heart className="w-3.5 h-3.5 mr-1.5" /> Charities
           </TabsTrigger>
           <TabsTrigger value="transactions" className="rounded-lg text-sm px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <ArrowLeftRight className="w-3.5 h-3.5 mr-1.5" /> Transactions
@@ -178,33 +205,69 @@ export function CompanyDetailPage({ id }: { id: string }) {
         </TabsList>
 
         {/* ── Charities tab ── */}
-        <TabsContent value="charities" className="mt-4">
+        <TabsContent value="charities" className="mt-4 space-y-4">
+          {/* Donation history */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="text-base font-semibold text-foreground">Donation History</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Charities this company has allocated funds to via Good2Give.
+              </p>
+            </div>
+            <div className="divide-y divide-border/60">
+              {DONATED_CHARITIES.map((charity, i) => (
+                <motion.div
+                  key={charity.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="flex items-center gap-4 px-5 py-3.5"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-4 h-4 text-rose-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{charity.name}</p>
+                    <p className="text-xs text-muted-foreground">ABN {charity.abn} · {charity.category}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      ${charity.totalDonated.toLocaleString("en-AU")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Last {charity.lastDonation}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Blacklisted charities */}
           <div className="bg-white rounded-2xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-foreground">Assigned Charities</h2>
+                <h2 className="text-base font-semibold text-foreground">Blacklisted Charities</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Charities this company can allocate funds to.
+                  These charities are hidden from this company. By default they have access to the full Good2Give registry.
                 </p>
               </div>
               <Button
                 size="sm"
-                onClick={() => setAddCharityOpen(true)}
-                className="h-8 text-sm rounded-xl bg-primary hover:bg-primary/90 text-white gap-1.5"
+                variant="outline"
+                onClick={() => { setBlacklistSearch(""); setBlacklistOpen(true); }}
+                className="h-8 text-sm rounded-xl gap-1.5 border-red-200 text-red-800 hover:bg-red-50 hover:text-red-900 hover:border-red-300"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Charity
+                <Ban className="w-3.5 h-3.5" /> Blacklist Charity
               </Button>
             </div>
-
             <div className="divide-y divide-border/60">
-              {assignedCharities.length === 0 ? (
+              {blacklistedCharities.length === 0 ? (
                 <div className="flex flex-col items-center py-10 text-center">
-                  <Heart className="w-7 h-7 text-muted-foreground/40 mb-2" />
-                  <p className="text-sm font-medium text-foreground">No charities assigned</p>
-                  <p className="text-xs text-muted-foreground mt-1">Add charities from the prevetted list.</p>
+                  <Ban className="w-7 h-7 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm font-medium text-foreground">No charities blacklisted</p>
+                  <p className="text-xs text-muted-foreground mt-1">This company has access to the full Good2Give charity registry.</p>
                 </div>
               ) : (
-                assignedCharities.map((charity, i) => (
+                blacklistedCharities.map((charity, i) => (
                   <motion.div
                     key={charity.id}
                     initial={{ opacity: 0, y: 4 }}
@@ -212,8 +275,8 @@ export function CompanyDetailPage({ id }: { id: string }) {
                     transition={{ delay: i * 0.04 }}
                     className="flex items-center gap-4 px-5 py-3.5"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                      <Heart className="w-4 h-4 text-rose-500" />
+                    <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-4 h-4 text-muted-foreground/50" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">{charity.name}</p>
@@ -222,12 +285,12 @@ export function CompanyDetailPage({ id }: { id: string }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 px-2.5 text-xs rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                      disabled={savingCharity === charity.id}
-                      onClick={() => toggleCharity(charity.id, false)}
+                      className="h-7 px-2.5 text-xs rounded-lg border-border text-muted-foreground hover:bg-muted/60"
+                      disabled={blacklistSaving === charity.id}
+                      onClick={() => toggleBlacklist(charity.id, false)}
                     >
-                      {savingCharity === charity.id ? (
-                        <span className="w-3 h-3 rounded-full border-2 border-red-400/40 border-t-red-600 animate-spin" />
+                      {blacklistSaving === charity.id ? (
+                        <span className="w-3 h-3 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
                       ) : (
                         <><X className="w-3 h-3 mr-1" /> Remove</>
                       )}
@@ -324,6 +387,44 @@ export function CompanyDetailPage({ id }: { id: string }) {
 
         {/* ── Details tab ── */}
         <TabsContent value="details" className="mt-4 space-y-4">
+          {/* Account Manager — editable */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserCircle2 className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-base font-semibold text-foreground">Account Manager</h2>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl h-8 text-xs gap-1.5"
+                onClick={() => { setAssignSelected(accountManagerId); setAssignOpen(true); }}
+              >
+                Change
+              </Button>
+            </div>
+            <div className="px-5 py-4">
+              {currentManager ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-primary">{currentManager.initials}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{currentManager.name}</p>
+                    <p className="text-xs text-muted-foreground">{currentManager.email}</p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setAssignSelected(""); setAssignOpen(true); }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <UserCircle2 className="w-4 h-4" /> No account manager assigned
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Registration */}
           <div className="bg-white rounded-2xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center gap-2">
@@ -416,13 +517,13 @@ export function CompanyDetailPage({ id }: { id: string }) {
         </TabsContent>
       </Tabs>
 
-      {/* Add Charity Dialog */}
-      <Dialog open={addCharityOpen} onOpenChange={setAddCharityOpen}>
+      {/* Blacklist Charity Dialog */}
+      <Dialog open={blacklistOpen} onOpenChange={setBlacklistOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Charity to KFC Australia</DialogTitle>
+            <DialogTitle>Blacklist a Charity</DialogTitle>
             <DialogDescription>
-              Select from the prevetted Good2Give charity registry. The company will be able to allocate funds to these charities.
+              Select a charity from the Good2Give registry to hide it from KFC Australia. They will no longer see it when allocating funds.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -430,18 +531,18 @@ export function CompanyDetailPage({ id }: { id: string }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search charities…"
-                value={charitySearch}
-                onChange={(e) => setCharitySearch(e.target.value)}
+                value={blacklistSearch}
+                onChange={(e) => setBlacklistSearch(e.target.value)}
                 className="pl-8 h-9 text-sm rounded-xl"
               />
             </div>
             <div className="max-h-64 overflow-y-auto divide-y divide-border/60 rounded-xl border border-border">
-              {availableCharities.length === 0 ? (
+              {blacklistableCharities.length === 0 ? (
                 <div className="flex flex-col items-center py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No available charities match your search.</p>
+                  <p className="text-sm text-muted-foreground">No charities match your search.</p>
                 </div>
               ) : (
-                availableCharities.map((charity) => (
+                blacklistableCharities.map((charity) => (
                   <div key={charity.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center flex-shrink-0">
                       <Heart className="w-4 h-4 text-rose-500" />
@@ -452,16 +553,15 @@ export function CompanyDetailPage({ id }: { id: string }) {
                     </div>
                     <Button
                       size="sm"
-                      className="h-7 px-2.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
-                      disabled={savingCharity === charity.id}
-                      onClick={async () => {
-                        await toggleCharity(charity.id, true);
-                      }}
+                      variant="outline"
+                      className="h-7 px-2.5 text-xs rounded-lg border-red-200 text-red-800 hover:bg-red-50 hover:border-red-300"
+                      disabled={blacklistSaving === charity.id}
+                      onClick={() => toggleBlacklist(charity.id, true)}
                     >
-                      {savingCharity === charity.id ? (
-                        <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      {blacklistSaving === charity.id ? (
+                        <span className="w-3 h-3 rounded-full border-2 border-red-400/40 border-t-red-600 animate-spin" />
                       ) : (
-                        <><Check className="w-3 h-3 mr-1" /> Add</>
+                        <><Ban className="w-3 h-3 mr-1" /> Blacklist</>
                       )}
                     </Button>
                   </div>
@@ -470,7 +570,62 @@ export function CompanyDetailPage({ id }: { id: string }) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddCharityOpen(false)}>Done</Button>
+            <Button variant="outline" onClick={() => setBlacklistOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Account Manager Dialog */}
+      <Dialog open={assignOpen} onOpenChange={() => setAssignOpen(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change Account Manager</DialogTitle>
+            <DialogDescription>
+              Select an admin to be the primary point of contact for KFC Australia Pty Ltd.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {ADMIN_USERS.map((admin) => (
+              <button
+                key={admin.id}
+                onClick={() => setAssignSelected(admin.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${
+                  assignSelected === admin.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/40"
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-primary">{admin.initials}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{admin.name}</p>
+                  <p className="text-xs text-muted-foreground">{admin.email}</p>
+                </div>
+                {assignSelected === admin.id && (
+                  <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setAssignOpen(false)} className="flex-1">Cancel</Button>
+            <Button
+              onClick={handleAssign}
+              disabled={assignLoading || assignSelected === accountManagerId}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white"
+            >
+              {assignLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  Saving…
+                </span>
+              ) : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Building2, Search, CheckCircle2, XCircle, Clock, ChevronRight, MoreHorizontal, Mail, Phone,
+  Building2, Search, CheckCircle2, XCircle, Clock, ChevronRight, MoreHorizontal, Mail, Phone, UserCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,13 @@ type PendingCompany = {
   appliedAt: string;
 };
 
+const ADMIN_USERS = [
+  { id: "sa", name: "Sarah Admin",  initials: "SA", email: "sarah@goodstack.org"    },
+  { id: "jt", name: "James Taylor", initials: "JT", email: "j.taylor@goodstack.org" },
+  { id: "mp", name: "Maria Patel",  initials: "MP", email: "m.patel@goodstack.org"  },
+  { id: "rl", name: "Ryan Lee",     initials: "RL", email: "r.lee@goodstack.org"    },
+];
+
 const PENDING_COMPANIES: PendingCompany[] = [
   { id: "woolworths",  name: "Woolworths Group",   abn: "88 000 014 675", industry: "Retail",           contactName: "Mark Davies",  contactEmail: "mark.davies@woolworths.com.au",    contactPhone: "+61 2 8885 0000", appliedAt: "Today, 9:14 AM"     },
   { id: "bunnings",   name: "Bunnings Warehouse",  abn: "26 008 672 179", industry: "Home Improvement", contactName: "Lisa Nguyen",  contactEmail: "l.nguyen@bunnings.com.au",         contactPhone: "+61 3 8831 9777", appliedAt: "Today, 7:02 AM"     },
@@ -46,6 +53,7 @@ export function PendingCompaniesPage() {
   const [search, setSearch] = useState("");
   const [confirmDialog, setConfirmDialog] = useState<{ type: "approve" | "deny"; company: PendingCompany } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(null);
 
   const filtered = companies.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,6 +68,7 @@ export function PendingCompaniesPage() {
     setCompanies((prev) => prev.filter((c) => c.id !== confirmDialog.company.id));
     setActionLoading(false);
     setConfirmDialog(null);
+    setSelectedManagerId(null);
   };
 
   return (
@@ -205,9 +214,12 @@ export function PendingCompaniesPage() {
       </div>
 
       {/* Confirm Dialog */}
-      <Dialog open={!!confirmDialog} onOpenChange={() => setConfirmDialog(null)}>
+      <Dialog
+        open={!!confirmDialog}
+        onOpenChange={() => { setConfirmDialog(null); setSelectedManagerId(null); }}
+      >
         {confirmDialog && (
-          <DialogContent className="max-w-sm">
+          <DialogContent className={confirmDialog.type === "approve" ? "max-w-md" : "max-w-sm"}>
             <DialogHeader>
               <DialogTitle>
                 {confirmDialog.type === "approve" ? "Approve company?" : "Deny sign-up?"}
@@ -218,13 +230,61 @@ export function PendingCompaniesPage() {
                   : `${confirmDialog.company.name}'s sign-up request will be declined.`}
               </DialogDescription>
             </DialogHeader>
+
+            {/* Company summary */}
             <div className="rounded-xl bg-muted/40 border border-border p-3 text-sm">
               <p className="font-semibold text-foreground">{confirmDialog.company.name}</p>
               <p className="text-xs text-muted-foreground mt-0.5">ABN {confirmDialog.company.abn}</p>
               <p className="text-xs text-muted-foreground">{confirmDialog.company.contactEmail}</p>
             </div>
+
+            {/* Account manager picker — approve only */}
+            {confirmDialog.type === "approve" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <UserCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-xs font-semibold text-foreground">Assign Account Manager</p>
+                  <span className="text-xs text-muted-foreground">(optional)</span>
+                </div>
+                <div className="space-y-1.5">
+                  {ADMIN_USERS.map((admin) => (
+                    <button
+                      key={admin.id}
+                      onClick={() => setSelectedManagerId((prev) => prev === admin.id ? null : admin.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all text-left ${
+                        selectedManagerId === admin.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-bold text-primary">{admin.initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{admin.name}</p>
+                        <p className="text-xs text-muted-foreground">{admin.email}</p>
+                      </div>
+                      {selectedManagerId === admin.id && (
+                        <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setConfirmDialog(null)} className="flex-1">Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => { setConfirmDialog(null); setSelectedManagerId(null); }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={handleAction}
                 disabled={actionLoading}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2, Search, Plus, ChevronRight,
-  Clock, MoreHorizontal, Mail, Phone,
+  Clock, MoreHorizontal, Mail, Phone, UserCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,20 @@ import Link from "next/link";
 
 type Status = "pending" | "active" | "invited" | "suspended";
 
+type AdminUser = {
+  id: string;
+  name: string;
+  initials: string;
+  email: string;
+};
+
+const ADMIN_USERS: AdminUser[] = [
+  { id: "sa",  name: "Sarah Admin",   initials: "SA", email: "sarah@goodstack.org"   },
+  { id: "jt",  name: "James Taylor",  initials: "JT", email: "j.taylor@goodstack.org" },
+  { id: "mp",  name: "Maria Patel",   initials: "MP", email: "m.patel@goodstack.org"  },
+  { id: "rl",  name: "Ryan Lee",      initials: "RL", email: "r.lee@goodstack.org"    },
+];
+
 type Company = {
   id: string;
   name: string;
@@ -40,19 +54,20 @@ type Company = {
   balance: string;
   joinedAt: string;
   charityCount: number;
+  accountManagerId: string | null;
 };
 
 const COMPANIES: Company[] = [
-  { id: "kfc-au",       name: "KFC Australia Pty Ltd",        abn: "51 004 220 518", industry: "Food & Beverage",    status: "active",    contactName: "Jane Smith",     contactEmail: "jane@kfc.com.au",               contactPhone: "+61 2 9274 0000", balance: "$48,392",  joinedAt: "Jan 2025",       charityCount: 5  },
-  { id: "maccas-au",    name: "McDonald's Australia",          abn: "43 008 496 928", industry: "Food & Beverage",    status: "active",    contactName: "Paul Moore",     contactEmail: "p.moore@mcdonalds.com.au",       contactPhone: "+61 2 9875 7100", balance: "$124,210", joinedAt: "Mar 2025",       charityCount: 8  },
-  { id: "jb-hifi",      name: "JB Hi-Fi Limited",              abn: "80 093 112 396", industry: "Electronics Retail", status: "active",    contactName: "Sarah Lee",      contactEmail: "sarah.lee@jbhifi.com.au",        contactPhone: "+61 3 8530 7333", balance: "$32,840",  joinedAt: "Jun 2025",       charityCount: 4  },
-  { id: "cotton-on",    name: "Cotton On Group",               abn: "19 125 161 888", industry: "Fashion Retail",     status: "active",    contactName: "Tom Wilson",     contactEmail: "t.wilson@cottonon.com",          contactPhone: "+61 3 5241 0200", balance: "$18,590",  joinedAt: "Aug 2025",       charityCount: 3  },
-  { id: "woolworths",   name: "Woolworths Group",              abn: "88 000 014 675", industry: "Retail",             status: "pending",   contactName: "Mark Davies",    contactEmail: "mark.davies@woolworths.com.au",  contactPhone: "+61 2 8885 0000", balance: "—",        joinedAt: "Today",          charityCount: 0  },
-  { id: "bunnings",     name: "Bunnings Warehouse",            abn: "26 008 672 179", industry: "Home Improvement",   status: "pending",   contactName: "Lisa Nguyen",    contactEmail: "l.nguyen@bunnings.com.au",       contactPhone: "+61 3 8831 9777", balance: "—",        joinedAt: "Today",          charityCount: 0  },
-  { id: "village",      name: "Village Cinemas",               abn: "58 003 073 900", industry: "Entertainment",      status: "pending",   contactName: "Tom Ricci",      contactEmail: "tricci@villagecinemas.com.au",   contactPhone: "+61 3 9667 6565", balance: "—",        joinedAt: "Yesterday",      charityCount: 0  },
-  { id: "subway",       name: "Subway Australia",              abn: "42 100 448 565", industry: "Food & Beverage",    status: "pending",   contactName: "Priya Singh",    contactEmail: "priya@subway.com.au",            contactPhone: "+61 7 3010 4444", balance: "—",        joinedAt: "Yesterday",      charityCount: 0  },
-  { id: "danmurphys",   name: "Dan Murphy's",                  abn: "12 004 319 948", industry: "Retail",             status: "invited",   contactName: "Chris Ford",     contactEmail: "c.ford@danmurphys.com.au",       contactPhone: "+61 2 9339 0200", balance: "—",        joinedAt: "Invited 3d ago", charityCount: 0  },
-  { id: "officeworks",  name: "Officeworks",                   abn: "36 004 763 526", industry: "Office Retail",      status: "suspended", contactName: "Emma Brown",     contactEmail: "e.brown@officeworks.com.au",     contactPhone: "+61 3 9811 7600", balance: "$2,100",   joinedAt: "May 2025",       charityCount: 2  },
+  { id: "kfc-au",       name: "KFC Australia Pty Ltd",        abn: "51 004 220 518", industry: "Food & Beverage",    status: "active",    contactName: "Jane Smith",     contactEmail: "jane@kfc.com.au",               contactPhone: "+61 2 9274 0000", balance: "$48,392",  joinedAt: "Jan 2025",       charityCount: 5,  accountManagerId: "sa"  },
+  { id: "maccas-au",    name: "McDonald's Australia",          abn: "43 008 496 928", industry: "Food & Beverage",    status: "active",    contactName: "Paul Moore",     contactEmail: "p.moore@mcdonalds.com.au",       contactPhone: "+61 2 9875 7100", balance: "$124,210", joinedAt: "Mar 2025",       charityCount: 8,  accountManagerId: "jt"  },
+  { id: "jb-hifi",      name: "JB Hi-Fi Limited",              abn: "80 093 112 396", industry: "Electronics Retail", status: "active",    contactName: "Sarah Lee",      contactEmail: "sarah.lee@jbhifi.com.au",        contactPhone: "+61 3 8530 7333", balance: "$32,840",  joinedAt: "Jun 2025",       charityCount: 4,  accountManagerId: "mp"  },
+  { id: "cotton-on",    name: "Cotton On Group",               abn: "19 125 161 888", industry: "Fashion Retail",     status: "active",    contactName: "Tom Wilson",     contactEmail: "t.wilson@cottonon.com",          contactPhone: "+61 3 5241 0200", balance: "$18,590",  joinedAt: "Aug 2025",       charityCount: 3,  accountManagerId: null  },
+  { id: "woolworths",   name: "Woolworths Group",              abn: "88 000 014 675", industry: "Retail",             status: "pending",   contactName: "Mark Davies",    contactEmail: "mark.davies@woolworths.com.au",  contactPhone: "+61 2 8885 0000", balance: "—",        joinedAt: "Today",          charityCount: 0,  accountManagerId: null  },
+  { id: "bunnings",     name: "Bunnings Warehouse",            abn: "26 008 672 179", industry: "Home Improvement",   status: "pending",   contactName: "Lisa Nguyen",    contactEmail: "l.nguyen@bunnings.com.au",       contactPhone: "+61 3 8831 9777", balance: "—",        joinedAt: "Today",          charityCount: 0,  accountManagerId: null  },
+  { id: "village",      name: "Village Cinemas",               abn: "58 003 073 900", industry: "Entertainment",      status: "pending",   contactName: "Tom Ricci",      contactEmail: "tricci@villagecinemas.com.au",   contactPhone: "+61 3 9667 6565", balance: "—",        joinedAt: "Yesterday",      charityCount: 0,  accountManagerId: null  },
+  { id: "subway",       name: "Subway Australia",              abn: "42 100 448 565", industry: "Food & Beverage",    status: "pending",   contactName: "Priya Singh",    contactEmail: "priya@subway.com.au",            contactPhone: "+61 7 3010 4444", balance: "—",        joinedAt: "Yesterday",      charityCount: 0,  accountManagerId: null  },
+  { id: "danmurphys",   name: "Dan Murphy's",                  abn: "12 004 319 948", industry: "Retail",             status: "invited",   contactName: "Chris Ford",     contactEmail: "c.ford@danmurphys.com.au",       contactPhone: "+61 2 9339 0200", balance: "—",        joinedAt: "Invited 3d ago", charityCount: 0,  accountManagerId: "rl"  },
+  { id: "officeworks",  name: "Officeworks",                   abn: "36 004 763 526", industry: "Office Retail",      status: "suspended", contactName: "Emma Brown",     contactEmail: "e.brown@officeworks.com.au",     contactPhone: "+61 3 9811 7600", balance: "$2,100",   joinedAt: "May 2025",       charityCount: 2,  accountManagerId: "sa"  },
 ];
 
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
@@ -81,6 +96,9 @@ export function CompaniesPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ type: "suspend" | "reinstate"; company: Company } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [assignDialog, setAssignDialog] = useState<Company | null>(null);
+  const [assignSelected, setAssignSelected] = useState<string>("");
+  const [assignLoading, setAssignLoading] = useState(false);
 
   const filtered = companies.filter((c) => {
     const matchesTab = tab === "all" || c.status === tab;
@@ -118,6 +136,18 @@ export function CompaniesPage() {
     }));
     setActionLoading(false);
     setConfirmDialog(null);
+  };
+
+  const handleAssign = async () => {
+    if (!assignDialog) return;
+    setAssignLoading(true);
+    await new Promise((r) => setTimeout(r, 600));
+    setCompanies((prev) => prev.map((c) =>
+      c.id === assignDialog.id ? { ...c, accountManagerId: assignSelected || null } : c
+    ));
+    setAssignLoading(false);
+    setAssignDialog(null);
+    setAssignSelected("");
   };
 
   return (
@@ -193,6 +223,16 @@ export function CompaniesPage() {
           </div>
         </div>
 
+        {/* Column headers */}
+        <div className="hidden lg:grid grid-cols-[2fr_160px_100px_80px_130px_72px] gap-4 px-5 py-2 bg-muted/30 border-b border-border/60">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Account Manager</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Balance</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Charities</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Joined</p>
+          <p />
+        </div>
+
         {/* Table */}
         <div className="divide-y divide-border/60">
           {filtered.length === 0 ? (
@@ -210,49 +250,71 @@ export function CompaniesPage() {
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/20 transition-colors"
+                  className="grid grid-cols-1 lg:grid-cols-[2fr_160px_100px_80px_130px_72px] gap-4 px-5 py-3.5 items-center hover:bg-muted/20 transition-colors"
                 >
-                  {/* Icon */}
-                  <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                  {/* Main info */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground">{company.name}</p>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.className}`}>
+                          {status.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        ABN {company.abn} · {company.industry} · {company.contactName}
+                      </p>
+                      <p className="text-xs text-muted-foreground/70 truncate flex items-center gap-2 mt-0.5">
+                        <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{company.contactEmail}</span>
+                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{company.contactPhone}</span>
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Main info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{company.name}</p>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.className}`}>
-                        {status.label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      ABN {company.abn} · {company.industry} · {company.contactName}
-                    </p>
-                    <p className="text-xs text-muted-foreground/70 truncate flex items-center gap-2 mt-0.5">
-                      <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{company.contactEmail}</span>
-                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{company.contactPhone}</span>
-                    </p>
+                  {/* Account Manager */}
+                  <div className="hidden lg:flex items-center gap-1.5 min-w-0">
+                    {(() => {
+                      const mgr = ADMIN_USERS.find((a) => a.id === company.accountManagerId);
+                      return mgr ? (
+                        <>
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[9px] font-bold text-primary">{mgr.initials}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate">{mgr.name}</span>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => { setAssignDialog(company); setAssignSelected(""); }}
+                          className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-primary transition-colors"
+                        >
+                          <UserCircle2 className="w-3.5 h-3.5" /> Assign
+                        </button>
+                      );
+                    })()}
                   </div>
 
                   {/* Balance */}
-                  <div className="hidden md:block text-right flex-shrink-0 w-24">
+                  <div className="hidden lg:block text-right">
                     <p className="text-sm font-semibold text-foreground">{company.balance}</p>
                     <p className="text-xs text-muted-foreground">balance</p>
                   </div>
 
                   {/* Charities */}
-                  <div className="hidden lg:block text-right flex-shrink-0 w-20">
+                  <div className="hidden lg:block text-right">
                     <p className="text-sm font-semibold text-foreground">{company.charityCount}</p>
                     <p className="text-xs text-muted-foreground">charities</p>
                   </div>
 
                   {/* Joined */}
-                  <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
-                    <Clock className="w-3 h-3" /> {company.joinedAt}
+                  <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3 flex-shrink-0" /> {company.joinedAt}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 justify-end">
                     <Link href={`/dashboard/companies/${company.id}`}>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-lg">
                         <ChevronRight className="w-4 h-4" />
@@ -268,6 +330,9 @@ export function CompaniesPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Mail className="w-3.5 h-3.5 mr-2" /> Email Contact
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setAssignDialog(company); setAssignSelected(company.accountManagerId ?? ""); }}>
+                          <UserCircle2 className="w-3.5 h-3.5 mr-2" /> Assign Account Manager
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {company.status === "active" && (
@@ -392,6 +457,82 @@ export function CompaniesPage() {
                     {confirmDialog.type === "reinstate" && "Reinstate"}
                   </>
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      {/* Assign Account Manager Dialog */}
+      <Dialog open={!!assignDialog} onOpenChange={() => { setAssignDialog(null); setAssignSelected(""); }}>
+        {assignDialog && (
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Assign Account Manager</DialogTitle>
+              <DialogDescription>
+                Choose an admin to be the primary point of contact for {assignDialog.name}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-xl bg-muted/40 border border-border p-3 text-sm">
+              <p className="font-semibold text-foreground">{assignDialog.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">ABN {assignDialog.abn}</p>
+            </div>
+            <div className="space-y-2">
+              {ADMIN_USERS.map((admin) => (
+                <button
+                  key={admin.id}
+                  onClick={() => setAssignSelected(admin.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${
+                    assignSelected === admin.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-primary">{admin.initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{admin.name}</p>
+                    <p className="text-xs text-muted-foreground">{admin.email}</p>
+                  </div>
+                  {assignSelected === admin.id && (
+                    <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              ))}
+              {assignDialog.accountManagerId && (
+                <button
+                  onClick={() => setAssignSelected("")}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left ${
+                    assignSelected === ""
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-muted/40"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                    <UserCircle2 className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Remove assignment</p>
+                </button>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => { setAssignDialog(null); setAssignSelected(""); }} className="flex-1">Cancel</Button>
+              <Button
+                onClick={handleAssign}
+                disabled={assignLoading || (assignSelected === (assignDialog.accountManagerId ?? ""))}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white"
+              >
+                {assignLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    Saving…
+                  </span>
+                ) : "Save"}
               </Button>
             </DialogFooter>
           </DialogContent>

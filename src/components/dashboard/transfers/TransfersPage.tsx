@@ -61,7 +61,6 @@ export function TransfersPage() {
   const [tab, setTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [actionDialog, setActionDialog] = useState<{ type: "approve" | "decline"; transfer: FundTransfer } | null>(null);
-  const [abaDialog, setAbaDialog] = useState<FundTransfer | null>(null);
   const [loading, setLoading] = useState(false);
 
   const pending = transfers.filter((t) => t.status === "pending");
@@ -85,24 +84,18 @@ export function TransfersPage() {
   const handleAction = async () => {
     if (!actionDialog) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 900));
     setTransfers((prev) => prev.map((t) =>
       t.id === actionDialog.transfer.id
-        ? { ...t, status: actionDialog.type === "approve" ? "approved" as TransferStatus : "declined" as TransferStatus }
+        ? {
+            ...t,
+            status: actionDialog.type === "approve" ? "completed" as TransferStatus : "declined" as TransferStatus,
+            abaGenerated: actionDialog.type === "approve" ? true : t.abaGenerated,
+          }
         : t
     ));
     setLoading(false);
     setActionDialog(null);
-  };
-
-  const generateAba = async (transfer: FundTransfer) => {
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setTransfers((prev) => prev.map((t) =>
-      t.id === transfer.id ? { ...t, status: "completed" as TransferStatus, abaGenerated: true } : t
-    ));
-    setLoading(false);
-    setAbaDialog(null);
   };
 
   const TABS: { key: FilterTab; label: string; count: number }[] = [
@@ -246,15 +239,6 @@ export function TransfersPage() {
                             </Button>
                           </>
                         )}
-                        {(transfer.status === "approved") && (
-                          <Button
-                            size="sm"
-                            className="h-7 px-2.5 text-xs rounded-lg bg-primary hover:bg-primary/90 text-white"
-                            onClick={() => setAbaDialog(transfer)}
-                          >
-                            <FileText className="w-3 h-3 mr-1" /> Generate ABA
-                          </Button>
-                        )}
                         {transfer.status === "completed" && transfer.abaGenerated && (
                           <Button
                             size="sm"
@@ -281,25 +265,70 @@ export function TransfersPage() {
       {/* Approve / Decline Dialog */}
       <Dialog open={!!actionDialog} onOpenChange={() => setActionDialog(null)}>
         {actionDialog && (
-          <DialogContent className="max-w-sm">
+          <DialogContent className={actionDialog.type === "approve" ? "max-w-md" : "max-w-sm"}>
             <DialogHeader>
               <DialogTitle>
-                {actionDialog.type === "approve" ? "Approve fund transfer?" : "Decline fund transfer?"}
+                {actionDialog.type === "approve" ? "Approve & generate ABA file?" : "Decline fund transfer?"}
               </DialogTitle>
               <DialogDescription>
                 {actionDialog.type === "approve"
-                  ? "This will mark the transfer as approved. You'll then generate an ABA file to execute the payment."
+                  ? "Approving will immediately generate the ABA file and mark this transfer as completed."
                   : "The company will be notified that this allocation was declined."}
               </DialogDescription>
             </DialogHeader>
-            <div className="rounded-xl bg-muted/40 border border-border p-3 space-y-1">
-              <p className="text-sm font-semibold text-foreground">{actionDialog.transfer.charity}</p>
-              <p className="text-xs text-muted-foreground">From: {actionDialog.transfer.company}</p>
-              <p className="text-xs text-muted-foreground">Ref: {actionDialog.transfer.ref}</p>
-              <p className="text-base font-bold text-foreground mt-1">
-                ${actionDialog.transfer.amount.toLocaleString("en-AU", { minimumFractionDigits: 2 })} AUD
-              </p>
-            </div>
+
+            {actionDialog.type === "approve" ? (
+              <div className="space-y-3">
+                <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Charity</span>
+                    <span className="font-semibold text-foreground">{actionDialog.transfer.charity}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">From</span>
+                    <span className="font-medium text-foreground">{actionDialog.transfer.company}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">BSB</span>
+                    <span className="font-medium text-foreground">{actionDialog.transfer.charityBsb}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Account</span>
+                    <span className="font-medium text-foreground">{actionDialog.transfer.charityAccount}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">ABN</span>
+                    <span className="font-medium text-foreground">{actionDialog.transfer.charityAbn}</span>
+                  </div>
+                  <div className="border-t border-border pt-2 flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-bold text-foreground text-base">
+                      ${actionDialog.transfer.amount.toLocaleString("en-AU", { minimumFractionDigits: 2 })} AUD
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Reference</span>
+                    <span className="font-medium text-foreground">{actionDialog.transfer.ref}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200">
+                  <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-blue-800 leading-relaxed">
+                    The ABA file will be generated in CEMTEX format and made available for download. The company will be notified automatically.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-muted/40 border border-border p-3 space-y-1">
+                <p className="text-sm font-semibold text-foreground">{actionDialog.transfer.charity}</p>
+                <p className="text-xs text-muted-foreground">From: {actionDialog.transfer.company}</p>
+                <p className="text-xs text-muted-foreground">Ref: {actionDialog.transfer.ref}</p>
+                <p className="text-base font-bold text-foreground mt-1">
+                  ${actionDialog.transfer.amount.toLocaleString("en-AU", { minimumFractionDigits: 2 })} AUD
+                </p>
+              </div>
+            )}
+
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setActionDialog(null)} className="flex-1">Cancel</Button>
               <Button
@@ -312,86 +341,19 @@ export function TransfersPage() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Processing…
+                    {actionDialog.type === "approve" ? "Generating…" : "Processing…"}
                   </span>
-                ) : actionDialog.type === "approve" ? "Approve Transfer" : "Decline Transfer"}
+                ) : actionDialog.type === "approve" ? (
+                  <span className="flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" /> Approve & Generate ABA
+                  </span>
+                ) : "Decline Transfer"}
               </Button>
             </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
 
-      {/* ABA Generation Dialog */}
-      <Dialog open={!!abaDialog} onOpenChange={() => setAbaDialog(null)}>
-        {abaDialog && (
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Generate ABA File</DialogTitle>
-              <DialogDescription>
-                Review the transfer details then generate the ABA file. The file will be available for download and the company will be notified.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              <div className="rounded-xl bg-muted/40 border border-border p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Charity</span>
-                  <span className="font-semibold text-foreground">{abaDialog.charity}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">BSB</span>
-                  <span className="font-medium text-foreground">{abaDialog.charityBsb}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Account</span>
-                  <span className="font-medium text-foreground">{abaDialog.charityAccount}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">ABN</span>
-                  <span className="font-medium text-foreground">{abaDialog.charityAbn}</span>
-                </div>
-                <div className="border-t border-border pt-2 flex justify-between text-sm">
-                  <span className="text-muted-foreground">Amount</span>
-                  <span className="font-bold text-foreground text-base">
-                    ${abaDialog.amount.toLocaleString("en-AU", { minimumFractionDigits: 2 })} AUD
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Reference</span>
-                  <span className="font-medium text-foreground">{abaDialog.ref}</span>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200">
-                <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-800 leading-relaxed">
-                  The ABA file will be generated in the standard CEMTEX format compatible with Australian banking systems. The company will receive a notification and can view the file from their portal.
-                </p>
-              </div>
-            </div>
-
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setAbaDialog(null)} className="flex-1">Cancel</Button>
-              <Button
-                onClick={() => generateAba(abaDialog)}
-                disabled={loading}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    Generating…
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" /> Generate & Download ABA
-                  </span>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
     </div>
   );
 }
