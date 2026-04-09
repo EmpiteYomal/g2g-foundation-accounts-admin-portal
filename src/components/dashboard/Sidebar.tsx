@@ -25,7 +25,8 @@ const navItems = [
   {
     section: "Companies",
     items: [
-      { href: "/dashboard/companies", label: "Companies", icon: Building2, badge: "4" },
+      { href: "/dashboard/companies", label: "Companies", icon: Building2, exact: true },
+      { href: "/dashboard/companies/pending", label: "Pending Approvals", icon: Building2, badge: "4", exact: true },
     ],
   },
   {

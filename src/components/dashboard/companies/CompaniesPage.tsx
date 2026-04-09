@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Building2, Search, Plus, Check, X, ChevronRight,
-  Clock, MoreHorizontal, Mail, Filter,
+  Building2, Search, Plus, ChevronRight,
+  Clock, MoreHorizontal, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,23 +61,24 @@ const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
   suspended: { label: "Suspended", className: "bg-red-100 text-red-700 border-red-200" },
 };
 
-type FilterTab = "all" | Status;
+type FilterTab = "all" | "active" | "invited" | "suspended";
 const TABS: { key: FilterTab; label: string }[] = [
   { key: "all",       label: "All" },
-  { key: "pending",   label: "Pending" },
   { key: "active",    label: "Active" },
   { key: "invited",   label: "Invited" },
   { key: "suspended", label: "Suspended" },
 ];
 
+const NON_PENDING = COMPANIES.filter((c) => c.status !== "pending");
+
 export function CompaniesPage() {
-  const [companies, setCompanies] = useState(COMPANIES);
+  const [companies, setCompanies] = useState(NON_PENDING);
   const [tab, setTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{ type: "approve" | "deny" | "suspend" | "reinstate"; company: Company } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ type: "suspend" | "reinstate"; company: Company } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const filtered = companies.filter((c) => {
@@ -89,7 +90,6 @@ export function CompaniesPage() {
 
   const counts = {
     all: companies.length,
-    pending: companies.filter((c) => c.status === "pending").length,
     active: companies.filter((c) => c.status === "active").length,
     invited: companies.filter((c) => c.status === "invited").length,
     suspended: companies.filter((c) => c.status === "suspended").length,
@@ -111,8 +111,6 @@ export function CompaniesPage() {
     const { type, company } = confirmDialog;
     setCompanies((prev) => prev.map((c) => {
       if (c.id !== company.id) return c;
-      if (type === "approve") return { ...c, status: "active" as Status };
-      if (type === "deny") return { ...c, status: "suspended" as Status };
       if (type === "suspend") return { ...c, status: "suspended" as Status };
       if (type === "reinstate") return { ...c, status: "active" as Status };
       return c;
@@ -128,7 +126,7 @@ export function CompaniesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Companies</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Manage company sign-ups, approvals, and foundation account access.
+            View and manage active, invited, and suspended company accounts.
           </p>
         </div>
         <Button
@@ -140,10 +138,9 @@ export function CompaniesPage() {
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Active", value: counts.active, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Pending approval", value: counts.pending, color: "text-amber-600", bg: "bg-amber-50" },
           { label: "Invited", value: counts.invited, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Suspended", value: counts.suspended, color: "text-red-600", bg: "bg-red-50" },
         ].map((s) => (
@@ -251,25 +248,6 @@ export function CompaniesPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {company.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2.5 text-xs rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                          onClick={() => setConfirmDialog({ type: "deny", company })}
-                        >
-                          <X className="w-3 h-3 mr-1" /> Deny
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="h-7 px-2.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
-                          onClick={() => setConfirmDialog({ type: "approve", company })}
-                        >
-                          <Check className="w-3 h-3 mr-1" /> Approve
-                        </Button>
-                      </>
-                    )}
                     <Link href={`/dashboard/companies/${company.id}`}>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-lg">
                         <ChevronRight className="w-4 h-4" />
@@ -374,14 +352,10 @@ export function CompaniesPage() {
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle>
-                {confirmDialog.type === "approve" && "Approve company?"}
-                {confirmDialog.type === "deny" && "Deny sign-up?"}
                 {confirmDialog.type === "suspend" && "Suspend account?"}
                 {confirmDialog.type === "reinstate" && "Reinstate account?"}
               </DialogTitle>
               <DialogDescription>
-                {confirmDialog.type === "approve" && `${confirmDialog.company.name} will be granted access to the portal.`}
-                {confirmDialog.type === "deny" && `${confirmDialog.company.name}'s sign-up request will be declined.`}
                 {confirmDialog.type === "suspend" && `${confirmDialog.company.name}'s access will be suspended immediately.`}
                 {confirmDialog.type === "reinstate" && `${confirmDialog.company.name}'s access will be restored.`}
               </DialogDescription>
@@ -397,7 +371,7 @@ export function CompaniesPage() {
                 onClick={handleAction}
                 disabled={actionLoading}
                 className={`flex-1 text-white ${
-                  confirmDialog.type === "approve" || confirmDialog.type === "reinstate"
+                  confirmDialog.type === "reinstate"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : "bg-destructive hover:bg-destructive/90"
                 }`}
@@ -409,8 +383,6 @@ export function CompaniesPage() {
                   </span>
                 ) : (
                   <>
-                    {confirmDialog.type === "approve" && "Approve"}
-                    {confirmDialog.type === "deny" && "Deny"}
                     {confirmDialog.type === "suspend" && "Suspend"}
                     {confirmDialog.type === "reinstate" && "Reinstate"}
                   </>
