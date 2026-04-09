@@ -23,9 +23,8 @@ export function DashboardHome() {
       {/* Main grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left column — 2/3 */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className="xl:col-span-2">
           <AdminPendingCompanies />
-          <AdminRecentActivity />
         </div>
 
         {/* Right column — 1/3 */}
@@ -33,6 +32,9 @@ export function DashboardHome() {
           <AdminQuickActions />
         </div>
       </div>
+
+      {/* Full-width recent activity */}
+      <AdminRecentActivity />
     </div>
   );
 }
