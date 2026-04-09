@@ -266,7 +266,7 @@ export function ReconciliationPage() {
         </div>
 
         {/* Column headers */}
-        <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-5 py-2 bg-muted/30 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_160px] gap-4 px-5 py-2 bg-muted/30 border-b border-border text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           <span>Description</span>
           <span>Date</span>
           <span>Amount</span>
@@ -295,7 +295,7 @@ export function ReconciliationPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ delay: i * 0.02 }}
-                    className={`grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 md:gap-4 px-5 py-3.5 items-center transition-colors hover:bg-muted/10 ${
+                    className={`grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_160px] gap-2 md:gap-4 px-5 py-3.5 items-center transition-colors hover:bg-muted/10 ${
                       isMatched ? "bg-emerald-50/40" : isIgnored ? "bg-muted/30 opacity-60" : ""
                     }`}
                   >

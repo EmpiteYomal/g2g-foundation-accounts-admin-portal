@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Building2, Search, Check, X, Clock, ChevronRight, MoreHorizontal, Mail,
+  Building2, Search, CheckCircle2, XCircle, Clock, MoreHorizontal, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
 
 type PendingCompany = {
   id: string;
@@ -109,7 +108,7 @@ export function PendingCompaniesPage() {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36 text-right">Applied</p>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-40 text-center">Actions</p>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-16" />
+          <p className="w-8" />
         </div>
 
         <div className="divide-y divide-border/60">
@@ -131,8 +130,8 @@ export function PendingCompaniesPage() {
               >
                 {/* Company info */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-4 h-4 text-amber-600" />
+                  <div className="w-9 h-9 rounded-xl bg-muted/60 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{company.name}</p>
@@ -153,35 +152,27 @@ export function PendingCompaniesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 px-3 text-xs rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                    className="rounded-xl h-8 px-3 text-xs border-red-200 text-red-800 hover:bg-red-50 hover:text-red-900 hover:border-red-300"
                     onClick={() => setConfirmDialog({ type: "deny", company })}
                   >
-                    <X className="w-3 h-3 mr-1" /> Deny
+                    <XCircle className="w-3.5 h-3.5 mr-1" /> Decline
                   </Button>
                   <Button
                     size="sm"
-                    className="h-7 px-3 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="rounded-xl h-8 px-3 text-xs bg-emerald-700 hover:bg-emerald-800 text-white"
                     onClick={() => setConfirmDialog({ type: "approve", company })}
                   >
-                    <Check className="w-3 h-3 mr-1" /> Approve
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
                   </Button>
                 </div>
 
                 {/* More menu */}
-                <div className="w-16 flex items-center justify-end gap-1 flex-shrink-0">
-                  <Link href={`/dashboard/companies/${company.id}`}>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-lg">
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
+                <div className="w-8 flex items-center justify-end flex-shrink-0">
                   <DropdownMenu>
                     <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted/60 transition-colors">
                       <MoreHorizontal className="w-4 h-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-44">
-                      <DropdownMenuItem onClick={() => window.location.href = `/dashboard/companies/${company.id}`}>
-                        View Profile
-                      </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Mail className="w-3.5 h-3.5 mr-2" /> Email Contact
                       </DropdownMenuItem>
