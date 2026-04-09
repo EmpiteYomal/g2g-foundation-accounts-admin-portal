@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   HandCoins, Download, Check, X, ChevronRight,
-  Building2, Heart, Clock, CheckCircle2, FileText,
+  Building2, Heart, Clock, CheckCircle2, XCircle, FileText,
   AlertCircle, Filter, Search, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -232,17 +232,17 @@ export function TransfersPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2.5 text-xs rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                              className="rounded-xl h-8 px-3 text-xs border-red-200 text-red-800 hover:bg-red-50 hover:text-red-900 hover:border-red-300"
                               onClick={() => setActionDialog({ type: "decline", transfer })}
                             >
-                              <X className="w-3 h-3 mr-1" /> Decline
+                              <XCircle className="w-3.5 h-3.5 mr-1" /> Decline
                             </Button>
                             <Button
                               size="sm"
-                              className="h-7 px-2.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                              className="rounded-xl h-8 px-3 text-xs bg-emerald-700 hover:bg-emerald-800 text-white"
                               onClick={() => setActionDialog({ type: "approve", transfer })}
                             >
-                              <Check className="w-3 h-3 mr-1" /> Approve
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
                             </Button>
                           </>
                         )}

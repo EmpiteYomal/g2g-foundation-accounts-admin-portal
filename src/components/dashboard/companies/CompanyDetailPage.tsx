@@ -6,6 +6,7 @@ import {
   ArrowLeft, Building2, Heart, Users, ArrowLeftRight,
   Plus, X, Search, Check, Mail, Phone, ExternalLink,
   Wallet, TrendingUp, HandCoins, MoreHorizontal,
+  MapPin, Globe, FileText, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,6 +172,9 @@ export function CompanyDetailPage({ id }: { id: string }) {
           <TabsTrigger value="team" className="rounded-lg text-sm px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Users className="w-3.5 h-3.5 mr-1.5" /> Team
           </TabsTrigger>
+          <TabsTrigger value="details" className="rounded-lg text-sm px-4 py-1.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Info className="w-3.5 h-3.5 mr-1.5" /> Details
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Charities tab ── */}
@@ -314,6 +318,99 @@ export function CompanyDetailPage({ id }: { id: string }) {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ── Details tab ── */}
+        <TabsContent value="details" className="mt-4 space-y-4">
+          {/* Registration */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <FileText className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold text-foreground">Registration</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
+              {[
+                { label: "Legal name",        value: "KFC Australia Pty Ltd" },
+                { label: "Trading name",      value: "KFC Australia" },
+                { label: "ABN",               value: "51 004 220 518" },
+                { label: "ACN",               value: "004 220 518" },
+                { label: "Industry",          value: "Food & Beverage" },
+                { label: "Entity type",       value: "Proprietary Limited" },
+                { label: "Incorporated",      value: "12 March 1968" },
+                { label: "Financial year end",value: "30 June" },
+              ].map((field) => (
+                <div key={field.label} className="px-5 py-3.5">
+                  <p className="text-xs text-muted-foreground font-medium">{field.label}</p>
+                  <p className="text-sm text-foreground font-semibold mt-0.5">{field.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact details */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold text-foreground">Contact Details</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
+              {[
+                { label: "Primary contact",  value: "Jane Smith" },
+                { label: "Title / Role",     value: "Trustee" },
+                { label: "Email",            value: "jane@kfc.com.au" },
+                { label: "Phone",            value: "+61 2 9274 0000" },
+                { label: "Secondary email",  value: "accounts@kfc.com.au" },
+                { label: "Fax",              value: "—" },
+              ].map((field) => (
+                <div key={field.label} className="px-5 py-3.5">
+                  <p className="text-xs text-muted-foreground font-medium">{field.label}</p>
+                  <p className="text-sm text-foreground font-semibold mt-0.5">{field.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Addresses */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold text-foreground">Addresses</h2>
+            </div>
+            <div className="divide-y divide-border/60">
+              {[
+                {
+                  type: "Registered address",
+                  lines: ["Level 5, 68 Alfred Street", "Milsons Point NSW 2061", "Australia"],
+                },
+                {
+                  type: "Mailing address",
+                  lines: ["PO Box 399", "North Sydney NSW 2059", "Australia"],
+                },
+              ].map((addr) => (
+                <div key={addr.type} className="px-5 py-3.5">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">{addr.type}</p>
+                  {addr.lines.map((line) => (
+                    <p key={line} className="text-sm text-foreground leading-5">{line}</p>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Online presence */}
+          <div className="bg-white rounded-2xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Globe className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-base font-semibold text-foreground">Online Presence</h2>
+            </div>
+            <div className="px-5 py-3.5 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">Website</p>
+                <p className="text-sm text-primary font-semibold mt-0.5">www.kfc.com.au</p>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
             </div>
           </div>
         </TabsContent>

@@ -36,12 +36,12 @@ type UserDetails = {
 // ─── Initial data ─────────────────────────────────────────────────────────────
 
 const INITIAL: UserDetails = {
-  firstName:  "Jane",
-  lastName:   "Smith",
-  email:      "jane@kfc.com.au",
-  phone:      "+61 412 345 678",
-  jobTitle:   "Head of Corporate Giving",
-  department: "Foundation & Community",
+  firstName:  "Sarah",
+  lastName:   "Admin",
+  email:      "sarah@goodstack.org",
+  phone:      "+61 2 9000 1234",
+  jobTitle:   "Platform Administrator",
+  department: "Operations",
 };
 
 // ─── Password Reset Section ───────────────────────────────────────────────────
@@ -309,8 +309,8 @@ export function AccountSettingsPage() {
           <div>
             <p className="text-lg font-bold text-foreground">{user.firstName} {user.lastName}</p>
             <p className="text-sm text-muted-foreground">{user.jobTitle} · {user.department}</p>
-            <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-              <Shield className="w-3 h-3" /> Trustee
+            <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs font-medium text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-full">
+              <Shield className="w-3 h-3" /> Super Admin
             </span>
           </div>
         )}
@@ -354,10 +354,10 @@ export function AccountSettingsPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: "Role",           value: "Trustee" },
-            { label: "Account",        value: "KFC Foundation" },
-            { label: "Member since",   value: "12 Jan 2025" },
-            { label: "Last login",     value: "8 Apr 2026, 9:02 AM" },
+            { label: "Role",           value: "Super Admin" },
+            { label: "Organisation",   value: "Goodstack" },
+            { label: "Admin since",    value: "3 Jun 2024" },
+            { label: "Last login",     value: "9 Apr 2026, 8:45 AM" },
             { label: "2FA",            value: "Not enabled" },
             { label: "Session",        value: "Active" },
           ].map((f) => (

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2, Search, Plus, ChevronRight,
-  Clock, MoreHorizontal, Mail,
+  Clock, MoreHorizontal, Mail, Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,22 +36,23 @@ type Company = {
   status: Status;
   contactName: string;
   contactEmail: string;
+  contactPhone: string;
   balance: string;
   joinedAt: string;
   charityCount: number;
 };
 
 const COMPANIES: Company[] = [
-  { id: "kfc-au",       name: "KFC Australia Pty Ltd",        abn: "51 004 220 518", industry: "Food & Beverage",   status: "active",    contactName: "Jane Smith",     contactEmail: "jane@kfc.com.au",            balance: "$48,392",  joinedAt: "Jan 2025",  charityCount: 5  },
-  { id: "maccas-au",    name: "McDonald's Australia",          abn: "43 008 496 928", industry: "Food & Beverage",   status: "active",    contactName: "Paul Moore",     contactEmail: "p.moore@mcdonalds.com.au",   balance: "$124,210", joinedAt: "Mar 2025",  charityCount: 8  },
-  { id: "jb-hifi",      name: "JB Hi-Fi Limited",              abn: "80 093 112 396", industry: "Electronics Retail",status: "active",    contactName: "Sarah Lee",      contactEmail: "sarah.lee@jbhifi.com.au",    balance: "$32,840",  joinedAt: "Jun 2025",  charityCount: 4  },
-  { id: "cotton-on",    name: "Cotton On Group",               abn: "19 125 161 888", industry: "Fashion Retail",    status: "active",    contactName: "Tom Wilson",     contactEmail: "t.wilson@cottonon.com",      balance: "$18,590",  joinedAt: "Aug 2025",  charityCount: 3  },
-  { id: "woolworths",   name: "Woolworths Group",              abn: "88 000 014 675", industry: "Retail",            status: "pending",   contactName: "Mark Davies",    contactEmail: "mark.davies@woolworths.com.au", balance: "—",    joinedAt: "Today",     charityCount: 0  },
-  { id: "bunnings",     name: "Bunnings Warehouse",            abn: "26 008 672 179", industry: "Home Improvement",  status: "pending",   contactName: "Lisa Nguyen",    contactEmail: "l.nguyen@bunnings.com.au",   balance: "—",        joinedAt: "Today",     charityCount: 0  },
-  { id: "village",      name: "Village Cinemas",               abn: "58 003 073 900", industry: "Entertainment",     status: "pending",   contactName: "Tom Ricci",      contactEmail: "tricci@villagecinemas.com.au", balance: "—",      joinedAt: "Yesterday", charityCount: 0  },
-  { id: "subway",       name: "Subway Australia",              abn: "42 100 448 565", industry: "Food & Beverage",   status: "pending",   contactName: "Priya Singh",    contactEmail: "priya@subway.com.au",        balance: "—",        joinedAt: "Yesterday", charityCount: 0  },
-  { id: "danmurphys",   name: "Dan Murphy's",                  abn: "12 004 319 948", industry: "Retail",            status: "invited",   contactName: "Chris Ford",     contactEmail: "c.ford@danmurphys.com.au",   balance: "—",        joinedAt: "Invited 3d ago", charityCount: 0 },
-  { id: "officeworks",  name: "Officeworks",                   abn: "36 004 763 526", industry: "Office Retail",     status: "suspended", contactName: "Emma Brown",     contactEmail: "e.brown@officeworks.com.au", balance: "$2,100",   joinedAt: "May 2025",  charityCount: 2  },
+  { id: "kfc-au",       name: "KFC Australia Pty Ltd",        abn: "51 004 220 518", industry: "Food & Beverage",    status: "active",    contactName: "Jane Smith",     contactEmail: "jane@kfc.com.au",               contactPhone: "+61 2 9274 0000", balance: "$48,392",  joinedAt: "Jan 2025",       charityCount: 5  },
+  { id: "maccas-au",    name: "McDonald's Australia",          abn: "43 008 496 928", industry: "Food & Beverage",    status: "active",    contactName: "Paul Moore",     contactEmail: "p.moore@mcdonalds.com.au",       contactPhone: "+61 2 9875 7100", balance: "$124,210", joinedAt: "Mar 2025",       charityCount: 8  },
+  { id: "jb-hifi",      name: "JB Hi-Fi Limited",              abn: "80 093 112 396", industry: "Electronics Retail", status: "active",    contactName: "Sarah Lee",      contactEmail: "sarah.lee@jbhifi.com.au",        contactPhone: "+61 3 8530 7333", balance: "$32,840",  joinedAt: "Jun 2025",       charityCount: 4  },
+  { id: "cotton-on",    name: "Cotton On Group",               abn: "19 125 161 888", industry: "Fashion Retail",     status: "active",    contactName: "Tom Wilson",     contactEmail: "t.wilson@cottonon.com",          contactPhone: "+61 3 5241 0200", balance: "$18,590",  joinedAt: "Aug 2025",       charityCount: 3  },
+  { id: "woolworths",   name: "Woolworths Group",              abn: "88 000 014 675", industry: "Retail",             status: "pending",   contactName: "Mark Davies",    contactEmail: "mark.davies@woolworths.com.au",  contactPhone: "+61 2 8885 0000", balance: "—",        joinedAt: "Today",          charityCount: 0  },
+  { id: "bunnings",     name: "Bunnings Warehouse",            abn: "26 008 672 179", industry: "Home Improvement",   status: "pending",   contactName: "Lisa Nguyen",    contactEmail: "l.nguyen@bunnings.com.au",       contactPhone: "+61 3 8831 9777", balance: "—",        joinedAt: "Today",          charityCount: 0  },
+  { id: "village",      name: "Village Cinemas",               abn: "58 003 073 900", industry: "Entertainment",      status: "pending",   contactName: "Tom Ricci",      contactEmail: "tricci@villagecinemas.com.au",   contactPhone: "+61 3 9667 6565", balance: "—",        joinedAt: "Yesterday",      charityCount: 0  },
+  { id: "subway",       name: "Subway Australia",              abn: "42 100 448 565", industry: "Food & Beverage",    status: "pending",   contactName: "Priya Singh",    contactEmail: "priya@subway.com.au",            contactPhone: "+61 7 3010 4444", balance: "—",        joinedAt: "Yesterday",      charityCount: 0  },
+  { id: "danmurphys",   name: "Dan Murphy's",                  abn: "12 004 319 948", industry: "Retail",             status: "invited",   contactName: "Chris Ford",     contactEmail: "c.ford@danmurphys.com.au",       contactPhone: "+61 2 9339 0200", balance: "—",        joinedAt: "Invited 3d ago", charityCount: 0  },
+  { id: "officeworks",  name: "Officeworks",                   abn: "36 004 763 526", industry: "Office Retail",      status: "suspended", contactName: "Emma Brown",     contactEmail: "e.brown@officeworks.com.au",     contactPhone: "+61 3 9811 7600", balance: "$2,100",   joinedAt: "May 2025",       charityCount: 2  },
 ];
 
 const STATUS_CONFIG: Record<Status, { label: string; className: string }> = {
@@ -226,6 +227,10 @@ export function CompaniesPage() {
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
                       ABN {company.abn} · {company.industry} · {company.contactName}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 truncate flex items-center gap-2 mt-0.5">
+                      <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{company.contactEmail}</span>
+                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{company.contactPhone}</span>
                     </p>
                   </div>
 

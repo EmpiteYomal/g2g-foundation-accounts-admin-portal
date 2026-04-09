@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Building2,
+  ClipboardList,
   FileText,
   X,
   Settings,
@@ -26,7 +27,7 @@ const navItems = [
     section: "Companies",
     items: [
       { href: "/dashboard/companies", label: "Companies", icon: Building2, exact: true },
-      { href: "/dashboard/companies/pending", label: "Pending Approvals", icon: Building2, badge: "4", exact: true },
+      { href: "/dashboard/companies/pending", label: "Pending Approvals", icon: ClipboardList, badge: "4", exact: true },
     ],
   },
   {

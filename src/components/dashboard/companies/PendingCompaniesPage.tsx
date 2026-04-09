@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Building2, Search, CheckCircle2, XCircle, Clock, MoreHorizontal, Mail,
+  Building2, Search, CheckCircle2, XCircle, Clock, ChevronRight, MoreHorizontal, Mail, Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 type PendingCompany = {
   id: string;
@@ -29,14 +30,15 @@ type PendingCompany = {
   industry: string;
   contactName: string;
   contactEmail: string;
+  contactPhone: string;
   appliedAt: string;
 };
 
 const PENDING_COMPANIES: PendingCompany[] = [
-  { id: "woolworths",  name: "Woolworths Group",   abn: "88 000 014 675", industry: "Retail",           contactName: "Mark Davies",  contactEmail: "mark.davies@woolworths.com.au",    appliedAt: "Today, 9:14 AM"     },
-  { id: "bunnings",   name: "Bunnings Warehouse",  abn: "26 008 672 179", industry: "Home Improvement", contactName: "Lisa Nguyen",  contactEmail: "l.nguyen@bunnings.com.au",         appliedAt: "Today, 7:02 AM"     },
-  { id: "village",    name: "Village Cinemas",      abn: "58 003 073 900", industry: "Entertainment",    contactName: "Tom Ricci",    contactEmail: "tricci@villagecinemas.com.au",     appliedAt: "Yesterday, 4:30 PM" },
-  { id: "subway",     name: "Subway Australia",     abn: "42 100 448 565", industry: "Food & Beverage",  contactName: "Priya Singh",  contactEmail: "priya@subway.com.au",              appliedAt: "Yesterday, 11:15 AM"},
+  { id: "woolworths",  name: "Woolworths Group",   abn: "88 000 014 675", industry: "Retail",           contactName: "Mark Davies",  contactEmail: "mark.davies@woolworths.com.au",    contactPhone: "+61 2 8885 0000", appliedAt: "Today, 9:14 AM"     },
+  { id: "bunnings",   name: "Bunnings Warehouse",  abn: "26 008 672 179", industry: "Home Improvement", contactName: "Lisa Nguyen",  contactEmail: "l.nguyen@bunnings.com.au",         contactPhone: "+61 3 8831 9777", appliedAt: "Today, 7:02 AM"     },
+  { id: "village",    name: "Village Cinemas",      abn: "58 003 073 900", industry: "Entertainment",    contactName: "Tom Ricci",    contactEmail: "tricci@villagecinemas.com.au",     contactPhone: "+61 3 9667 6565", appliedAt: "Yesterday, 4:30 PM" },
+  { id: "subway",     name: "Subway Australia",     abn: "42 100 448 565", industry: "Food & Beverage",  contactName: "Priya Singh",  contactEmail: "priya@subway.com.au",              contactPhone: "+61 7 3010 4444", appliedAt: "Yesterday, 11:15 AM"},
 ];
 
 export function PendingCompaniesPage() {
@@ -104,11 +106,11 @@ export function PendingCompaniesPage() {
         </div>
 
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-2 bg-muted/30 border-b border-border/60">
+        <div className="grid grid-cols-[1fr_180px_200px_72px] gap-4 px-5 py-2 bg-muted/30 border-b border-border/60">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</p>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36 text-right">Applied</p>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide w-40 text-center">Actions</p>
-          <p className="w-8" />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Applied</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Actions</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide" />
         </div>
 
         <div className="divide-y divide-border/60">
@@ -126,7 +128,7 @@ export function PendingCompaniesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -8 }}
                 transition={{ delay: i * 0.03 }}
-                className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-5 py-4 hover:bg-muted/20 transition-colors"
+                className="grid grid-cols-[1fr_180px_200px_72px] gap-4 items-center px-5 py-4 hover:bg-muted/20 transition-colors"
               >
                 {/* Company info */}
                 <div className="flex items-center gap-3 min-w-0">
@@ -138,17 +140,20 @@ export function PendingCompaniesPage() {
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
                       ABN {company.abn} · {company.industry} · {company.contactName}
                     </p>
-                    <p className="text-xs text-muted-foreground/70 truncate">{company.contactEmail}</p>
+                    <p className="text-xs text-muted-foreground/70 truncate flex items-center gap-2">
+                      <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{company.contactEmail}</span>
+                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{company.contactPhone}</span>
+                    </p>
                   </div>
                 </div>
 
                 {/* Applied date */}
-                <div className="w-36 flex items-center justify-end gap-1 text-xs text-muted-foreground flex-shrink-0">
+                <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3" /> {company.appliedAt}
                 </div>
 
                 {/* Approve / Deny */}
-                <div className="w-40 flex items-center justify-center gap-2 flex-shrink-0">
+                <div className="flex items-center justify-center gap-2">
                   <Button
                     size="sm"
                     variant="outline"
@@ -166,13 +171,23 @@ export function PendingCompaniesPage() {
                   </Button>
                 </div>
 
-                {/* More menu */}
-                <div className="w-8 flex items-center justify-end flex-shrink-0">
+                {/* Chevron + More menu */}
+                <div className="flex items-center justify-end gap-1">
+                  <Link href={`/dashboard/companies/pending/${company.id}`}>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-lg">
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted/60 transition-colors">
                       <MoreHorizontal className="w-4 h-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem asChild>
+                        <Link href={`/dashboard/companies/pending/${company.id}`}>
+                          View Details
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Mail className="w-3.5 h-3.5 mr-2" /> Email Contact
                       </DropdownMenuItem>

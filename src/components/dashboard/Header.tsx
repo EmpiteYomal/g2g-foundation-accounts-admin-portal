@@ -171,11 +171,8 @@ export function Header({ onMenuClick }: HeaderProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => window.location.href = "/dashboard/settings"}>
-                Admin Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = "/dashboard/audit"}>
-                Audit Log
+              <DropdownMenuItem onClick={() => window.location.href = "/dashboard/account"}>
+                Account Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
