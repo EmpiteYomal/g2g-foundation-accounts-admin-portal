@@ -60,26 +60,16 @@ const TRANSACTIONS: BankTransaction[] = [
   { id: "bt15", date: "04 Apr 2026", description: "DEPOSIT ANON 7712",                   reference: "ANON7712",   amount: 150.00,   bsb: "065-100", accountNo: "55500005", status: "unmatched" },
 ];
 
-const ACCOUNTS = {
-  company: [
-    { id: "kfc-au",        name: "KFC Australia Pty Ltd"         },
-    { id: "maccas-au",     name: "McDonald's Australia"          },
-    { id: "ridgeway",      name: "Ridgeway University"           },
-    { id: "ridgeway-bank", name: "Ridgeway Banking Corporation"  },
-    { id: "tuition-prop",  name: "Tuition Property Management"  },
-    { id: "gateway",       name: "Gateway Motors"                },
-    { id: "jb-hifi",       name: "JB Hi-Fi Limited"             },
-    { id: "cotton-on",     name: "Cotton On Group"               },
-  ],
-  individual: [
-    { id: "jane-smith",    name: "Jane Smith"    },
-    { id: "robert-chen",   name: "Robert Chen"   },
-    { id: "sarah-jones",   name: "Sarah Jones"   },
-    { id: "michael-tan",   name: "Michael Tan"   },
-    { id: "emily-white",   name: "Emily White"   },
-    { id: "david-nguyen",  name: "David Nguyen"  },
-  ],
-};
+const COMPANIES = [
+  { id: "kfc-au",        name: "KFC Australia Pty Ltd"        },
+  { id: "maccas-au",     name: "McDonald's Australia"         },
+  { id: "ridgeway",      name: "Ridgeway University"          },
+  { id: "ridgeway-bank", name: "Ridgeway Banking Corporation" },
+  { id: "tuition-prop",  name: "Tuition Property Management" },
+  { id: "gateway",       name: "Gateway Motors"               },
+  { id: "jb-hifi",       name: "JB Hi-Fi Limited"            },
+  { id: "cotton-on",     name: "Cotton On Group"              },
+];
 
 const ACCOUNT_TYPE_CONFIG: Record<AccountType, { label: string; className: string; icon: React.ElementType }> = {
   company:    { label: "Organisation", className: "bg-violet-100 text-violet-700 border-violet-200", icon: Building2 },
@@ -102,7 +92,6 @@ export function ReconciliationPage() {
   const [accountFilter, setAccountFilter] = useState<AccountFilter>("all");
   const [search, setSearch] = useState("");
   const [matchDialog, setMatchDialog] = useState<BankTransaction | null>(null);
-  const [matchAccountType, setMatchAccountType] = useState<AccountType>("company");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [matchLoading, setMatchLoading] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -136,20 +125,14 @@ export function ReconciliationPage() {
     return matchesTab && matchesAccount && matchesSearch;
   });
 
-  const openMatchDialog = (tx: BankTransaction) => {
-    setMatchDialog(tx);
-    setMatchAccountType("company");
-    setSelectedAccount("");
-  };
-
   const handleMatch = async () => {
     if (!matchDialog || !selectedAccount) return;
     setMatchLoading(true);
     await new Promise((r) => setTimeout(r, 700));
-    const account = ACCOUNTS[matchAccountType].find((a) => a.id === selectedAccount);
+    const company = COMPANIES.find((c) => c.id === selectedAccount);
     setTransactions((prev) => prev.map((t) =>
       t.id === matchDialog.id
-        ? { ...t, status: "manual-matched" as MatchStatus, matchedAccountName: account?.name, matchedAccountId: selectedAccount, matchedAccountType: matchAccountType }
+        ? { ...t, status: "manual-matched" as MatchStatus, matchedAccountName: company?.name, matchedAccountId: selectedAccount, matchedAccountType: "company" as AccountType }
         : t
     ));
     setMatchLoading(false);
@@ -172,7 +155,7 @@ export function ReconciliationPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Bank Reconciliation</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Match incoming bank transactions to company and individual Foundation Accounts.
+            Match incoming bank transactions to company Foundation Accounts. Individual accounts are reconciled automatically by the system.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -209,7 +192,7 @@ export function ReconciliationPage() {
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
           <Zap className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <p className="text-sm text-emerald-800">
-            <span className="font-semibold">{counts.matched} transactions</span> were auto-matched based on known bank account numbers. Review and confirm below.
+            <span className="font-semibold">{counts.matched} transactions</span> were auto-matched. Individual accounts are always reconciled automatically — only company transactions may require manual matching.
           </p>
         </div>
       )}
@@ -362,7 +345,7 @@ export function ReconciliationPage() {
                           <Button
                             size="sm"
                             className="h-7 px-2.5 text-xs rounded-lg bg-primary hover:bg-primary/90 text-white"
-                            onClick={() => openMatchDialog(tx)}
+                            onClick={() => { setMatchDialog(tx); setSelectedAccount(""); }}
                           >
                             Match
                           </Button>
@@ -376,7 +359,7 @@ export function ReconciliationPage() {
                           </Button>
                         </>
                       )}
-                      {isMatched && (
+                      {isMatched && tx.matchedAccountType !== "individual" && (
                         <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-lg" onClick={() => handleUnmatch(tx.id)}>
                           Unmatch
                         </Button>
@@ -414,9 +397,9 @@ export function ReconciliationPage() {
         {matchDialog && (
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Match Transaction to Account</DialogTitle>
+              <DialogTitle>Match Transaction to Company</DialogTitle>
               <DialogDescription>
-                Select the Foundation Account this bank transaction belongs to.
+                Select the company Foundation Account this bank transaction belongs to.
                 Once matched, this bank account will be remembered for future auto-matching.
               </DialogDescription>
             </DialogHeader>
@@ -430,39 +413,15 @@ export function ReconciliationPage() {
               </p>
             </div>
 
-            {/* Account type toggle */}
-            <div className="flex rounded-xl border border-border overflow-hidden">
-              {(["company", "individual"] as AccountType[]).map((type) => {
-                const cfg = ACCOUNT_TYPE_CONFIG[type];
-                const Icon = cfg.icon;
-                return (
-                  <button
-                    key={type}
-                    onClick={() => { setMatchAccountType(type); setSelectedAccount(""); }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
-                      matchAccountType === type
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted/40"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {type === "company" ? "Organisation" : "Individual"}
-                  </button>
-                );
-              })}
-            </div>
-
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
-                {matchAccountType === "company" ? "Company" : "Individual"} Foundation Account
-              </label>
+              <label className="text-sm font-medium text-foreground">Company Foundation Account</label>
               <Select value={selectedAccount} onValueChange={(v) => setSelectedAccount(v ?? "")}>
                 <SelectTrigger className="rounded-xl h-9 text-sm">
-                  <SelectValue placeholder={matchAccountType === "company" ? "Select company…" : "Select individual…"} />
+                  <SelectValue placeholder="Select company…" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ACCOUNTS[matchAccountType].map((a) => (
-                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  {COMPANIES.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
