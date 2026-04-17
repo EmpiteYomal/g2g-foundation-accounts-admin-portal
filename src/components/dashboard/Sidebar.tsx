@@ -12,6 +12,7 @@ import {
   Heart,
   HandCoins,
   ShieldCheck,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +29,13 @@ const navItems = [
     items: [
       { href: "/dashboard/companies", label: "Companies", icon: Building2, exact: true },
       { href: "/dashboard/companies/pending", label: "Pending Approvals", icon: ClipboardList, badge: "4", exact: true },
+    ],
+  },
+  {
+    section: "Individuals",
+    items: [
+      { href: "/dashboard/individuals", label: "Individuals", icon: User, exact: true },
+      { href: "/dashboard/individuals/pending", label: "Pending Approvals", icon: ClipboardList, badge: "3", exact: true },
     ],
   },
   {

@@ -3,13 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeftRight, Upload, Check, X, Search, ChevronDown,
-  Building2, CheckCircle2, AlertCircle, Clock, Info,
-  RefreshCw, Download, Filter, Zap,
+  ArrowLeftRight, Upload, Check, X, Search,
+  Building2, User, CheckCircle2, AlertCircle, Download, Zap, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +25,7 @@ import {
 } from "@/components/ui/select";
 
 type MatchStatus = "auto-matched" | "manual-matched" | "unmatched" | "ignored";
+type AccountType = "company" | "individual";
 
 type BankTransaction = {
   id: string;
@@ -37,157 +36,143 @@ type BankTransaction = {
   bsb: string;
   accountNo: string;
   status: MatchStatus;
-  matchedCompany?: string;
-  matchedCompanyId?: string;
+  matchedAccountName?: string;
+  matchedAccountId?: string;
+  matchedAccountType?: AccountType;
   confidence?: number;
 };
 
 const TRANSACTIONS: BankTransaction[] = [
-  {
-    id: "bt1", date: "09 Apr 2026", description: "PAYMENT RIDGEWAY UNIVERSITY",
-    reference: "RWUPAY992", amount: 6167.50, bsb: "062-000", accountNo: "10249876",
-    status: "auto-matched", matchedCompany: "Ridgeway University", matchedCompanyId: "ridgeway", confidence: 98,
-  },
-  {
-    id: "bt2", date: "09 Apr 2026", description: "PAYMENT TUITION PROPERTY MGMT",
-    reference: "PROP4491", amount: 1181.25, bsb: "062-111", accountNo: "20381923",
-    status: "auto-matched", matchedCompany: "Tuition Property Management", matchedCompanyId: "tuition-prop", confidence: 95,
-  },
-  {
-    id: "bt3", date: "08 Apr 2026", description: "CITY LIMOUSINES AHNM24",
-    reference: "AHNM24", amount: 100.50, bsb: "063-000", accountNo: "30123456",
-    status: "unmatched",
-  },
-  {
-    id: "bt4", date: "08 Apr 2026", description: "PAYMENT GATEWAY MOTORS",
-    reference: "GWMOT881", amount: 411.36, bsb: "062-500", accountNo: "40293847",
-    status: "auto-matched", matchedCompany: "Gateway Motors", matchedCompanyId: "gateway-motors", confidence: 100,
-  },
-  {
-    id: "bt5", date: "08 Apr 2026", description: "E-BANK 365",
-    reference: "EBANK365", amount: 1000.00, bsb: "064-000", accountNo: "50123789",
-    status: "unmatched",
-  },
-  {
-    id: "bt6", date: "07 Apr 2026", description: "7-ELEVEN STORES PTY LTD",
-    reference: "7EL00213", amount: 52.50, bsb: "065-000", accountNo: "60293847",
-    status: "unmatched",
-  },
-  {
-    id: "bt7", date: "07 Apr 2026", description: "SWANSTON SECURITY",
-    reference: "SWAN992", amount: 58.00, bsb: "066-000", accountNo: "70293847",
-    status: "unmatched",
-  },
-  {
-    id: "bt8", date: "06 Apr 2026", description: "PAYMENT RIDGEWAY BANKING CORP BANK FEES",
-    reference: "RBCFEE04", amount: 13.00, bsb: "062-000", accountNo: "10249876",
-    status: "auto-matched", matchedCompany: "Ridgeway Banking Corporation", matchedCompanyId: "ridgeway-bank", confidence: 92,
-  },
-  {
-    id: "bt9", date: "06 Apr 2026", description: "COPPER ST BAKERY",
-    reference: "CSB0044", amount: 10.75, bsb: "067-000", accountNo: "80293847",
-    status: "unmatched",
-  },
-  {
-    id: "bt10", date: "05 Apr 2026", description: "CENTRAL CITY PARKING",
-    reference: "CCP1234", amount: 12.00, bsb: "068-000", accountNo: "90293847",
-    status: "unmatched",
-  },
-  {
-    id: "bt11", date: "04 Apr 2026", description: "KFC AUSTRALIA PTY LTD TRANSFER",
-    reference: "KFCAU0042", amount: 12450.00, bsb: "063-000", accountNo: "10249876",
-    status: "auto-matched", matchedCompany: "KFC Australia Pty Ltd", matchedCompanyId: "kfc-au", confidence: 99,
-  },
-  {
-    id: "bt12", date: "03 Apr 2026", description: "MCDONALD'S AUSTRALIA TRANSFER",
-    reference: "MCDAU0018", amount: 8200.00, bsb: "064-000", accountNo: "20381923",
-    status: "auto-matched", matchedCompany: "McDonald's Australia", matchedCompanyId: "maccas-au", confidence: 97,
-  },
+  { id: "bt1",  date: "09 Apr 2026", description: "PAYMENT RIDGEWAY UNIVERSITY",         reference: "RWUPAY992",  amount: 6167.50,  bsb: "062-000", accountNo: "10249876", status: "auto-matched",  matchedAccountName: "Ridgeway University",      matchedAccountId: "ridgeway",     matchedAccountType: "company",    confidence: 98  },
+  { id: "bt2",  date: "09 Apr 2026", description: "TRANSFER JANE SMITH",                 reference: "JSMITH001",  amount: 5000.00,  bsb: "062-100", accountNo: "11100001", status: "auto-matched",  matchedAccountName: "Jane Smith",               matchedAccountId: "jane-smith",   matchedAccountType: "individual", confidence: 99  },
+  { id: "bt3",  date: "09 Apr 2026", description: "PAYMENT TUITION PROPERTY MGMT",       reference: "PROP4491",   amount: 1181.25,  bsb: "062-111", accountNo: "20381923", status: "auto-matched",  matchedAccountName: "Tuition Property Mgmt",    matchedAccountId: "tuition-prop", matchedAccountType: "company",    confidence: 95  },
+  { id: "bt4",  date: "08 Apr 2026", description: "CITY LIMOUSINES AHNM24",              reference: "AHNM24",     amount: 100.50,   bsb: "063-000", accountNo: "30123456", status: "unmatched" },
+  { id: "bt5",  date: "08 Apr 2026", description: "SARAH JONES PERSONAL TRANSFER",       reference: "SJONES019",  amount: 8000.00,  bsb: "064-100", accountNo: "44400004", status: "auto-matched",  matchedAccountName: "Sarah Jones",              matchedAccountId: "sarah-jones",  matchedAccountType: "individual", confidence: 100 },
+  { id: "bt6",  date: "08 Apr 2026", description: "PAYMENT GATEWAY MOTORS",              reference: "GWMOT881",   amount: 411.36,   bsb: "062-500", accountNo: "40293847", status: "auto-matched",  matchedAccountName: "Gateway Motors",           matchedAccountId: "gateway",      matchedAccountType: "company",    confidence: 100 },
+  { id: "bt7",  date: "08 Apr 2026", description: "E-BANK 365",                          reference: "EBANK365",   amount: 1000.00,  bsb: "064-000", accountNo: "50123789", status: "unmatched" },
+  { id: "bt8",  date: "07 Apr 2026", description: "M TAN FOUNDATION DEPOSIT",            reference: "MTAN0088",   amount: 1200.00,  bsb: "066-100", accountNo: "66600006", status: "auto-matched",  matchedAccountName: "Michael Tan",              matchedAccountId: "michael-tan",  matchedAccountType: "individual", confidence: 93  },
+  { id: "bt9",  date: "07 Apr 2026", description: "7-ELEVEN STORES PTY LTD",             reference: "7EL00213",   amount: 52.50,    bsb: "065-000", accountNo: "60293847", status: "unmatched" },
+  { id: "bt10", date: "07 Apr 2026", description: "SWANSTON SECURITY",                   reference: "SWAN992",    amount: 58.00,    bsb: "066-000", accountNo: "70293847", status: "unmatched" },
+  { id: "bt11", date: "06 Apr 2026", description: "PAYMENT RIDGEWAY BANKING CORP FEES",  reference: "RBCFEE04",   amount: 13.00,    bsb: "062-000", accountNo: "10249876", status: "auto-matched",  matchedAccountName: "Ridgeway Banking Corp",    matchedAccountId: "ridgeway-bank",matchedAccountType: "company",    confidence: 92  },
+  { id: "bt12", date: "06 Apr 2026", description: "INTERNET BANKING TRANSFER 998812",    reference: "IBT998812",  amount: 300.00,   bsb: "063-100", accountNo: "33300003", status: "unmatched" },
+  { id: "bt13", date: "05 Apr 2026", description: "KFC AUSTRALIA PTY LTD TRANSFER",      reference: "KFCAU0042",  amount: 12450.00, bsb: "063-000", accountNo: "10249876", status: "auto-matched",  matchedAccountName: "KFC Australia Pty Ltd",    matchedAccountId: "kfc-au",       matchedAccountType: "company",    confidence: 99  },
+  { id: "bt14", date: "04 Apr 2026", description: "ROBERT CHEN FOUNDATION DEPOSIT",      reference: "RCHEN042",   amount: 2500.00,  bsb: "062-200", accountNo: "22200002", status: "auto-matched",  matchedAccountName: "Robert Chen",              matchedAccountId: "robert-chen",  matchedAccountType: "individual", confidence: 96  },
+  { id: "bt15", date: "04 Apr 2026", description: "DEPOSIT ANON 7712",                   reference: "ANON7712",   amount: 150.00,   bsb: "065-100", accountNo: "55500005", status: "unmatched" },
 ];
 
-const COMPANIES = [
-  { id: "kfc-au",           name: "KFC Australia Pty Ltd" },
-  { id: "maccas-au",        name: "McDonald's Australia" },
-  { id: "ridgeway",         name: "Ridgeway University" },
-  { id: "ridgeway-bank",    name: "Ridgeway Banking Corporation" },
-  { id: "tuition-prop",     name: "Tuition Property Management" },
-  { id: "gateway-motors",   name: "Gateway Motors" },
-  { id: "jb-hifi",          name: "JB Hi-Fi Limited" },
-  { id: "cotton-on",        name: "Cotton On Group" },
-];
+const ACCOUNTS = {
+  company: [
+    { id: "kfc-au",        name: "KFC Australia Pty Ltd"         },
+    { id: "maccas-au",     name: "McDonald's Australia"          },
+    { id: "ridgeway",      name: "Ridgeway University"           },
+    { id: "ridgeway-bank", name: "Ridgeway Banking Corporation"  },
+    { id: "tuition-prop",  name: "Tuition Property Management"  },
+    { id: "gateway",       name: "Gateway Motors"                },
+    { id: "jb-hifi",       name: "JB Hi-Fi Limited"             },
+    { id: "cotton-on",     name: "Cotton On Group"               },
+  ],
+  individual: [
+    { id: "jane-smith",    name: "Jane Smith"    },
+    { id: "robert-chen",   name: "Robert Chen"   },
+    { id: "sarah-jones",   name: "Sarah Jones"   },
+    { id: "michael-tan",   name: "Michael Tan"   },
+    { id: "emily-white",   name: "Emily White"   },
+    { id: "david-nguyen",  name: "David Nguyen"  },
+  ],
+};
+
+const ACCOUNT_TYPE_CONFIG: Record<AccountType, { label: string; className: string; icon: React.ElementType }> = {
+  company:    { label: "Organisation", className: "bg-violet-100 text-violet-700 border-violet-200", icon: Building2 },
+  individual: { label: "Individual",   className: "bg-sky-100 text-sky-700 border-sky-200",          icon: User      },
+};
 
 type FilterTab = "all" | "unmatched" | "matched" | "ignored";
+type AccountFilter = "all" | "company" | "individual";
 
 const TABS: { key: FilterTab; label: string }[] = [
-  { key: "all",       label: "All" },
+  { key: "all",       label: "All"           },
   { key: "unmatched", label: "Needs Matching" },
-  { key: "matched",   label: "Matched" },
-  { key: "ignored",   label: "Ignored" },
+  { key: "matched",   label: "Matched"        },
+  { key: "ignored",   label: "Ignored"        },
 ];
 
 export function ReconciliationPage() {
   const [transactions, setTransactions] = useState(TRANSACTIONS);
   const [tab, setTab] = useState<FilterTab>("all");
+  const [accountFilter, setAccountFilter] = useState<AccountFilter>("all");
   const [search, setSearch] = useState("");
   const [matchDialog, setMatchDialog] = useState<BankTransaction | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState("");
+  const [matchAccountType, setMatchAccountType] = useState<AccountType>("company");
+  const [selectedAccount, setSelectedAccount] = useState("");
   const [matchLoading, setMatchLoading] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
   const counts = {
-    all: transactions.length,
+    all:       transactions.length,
     unmatched: transactions.filter((t) => t.status === "unmatched").length,
-    matched: transactions.filter((t) => t.status === "auto-matched" || t.status === "manual-matched").length,
-    ignored: transactions.filter((t) => t.status === "ignored").length,
+    matched:   transactions.filter((t) => t.status === "auto-matched" || t.status === "manual-matched").length,
+    ignored:   transactions.filter((t) => t.status === "ignored").length,
   };
 
-  const totalIn = transactions.reduce((s, t) => s + t.amount, 0);
-  const matchedIn = transactions.filter((t) => t.status !== "unmatched" && t.status !== "ignored").reduce((s, t) => s + t.amount, 0);
+  const totalIn   = transactions.reduce((s, t) => s + t.amount, 0);
+  const matchedIn = transactions
+    .filter((t) => t.status !== "unmatched" && t.status !== "ignored")
+    .reduce((s, t) => s + t.amount, 0);
 
   const filtered = transactions.filter((t) => {
     const matchesTab =
-      tab === "all" ? true :
+      tab === "all"       ? true :
       tab === "unmatched" ? t.status === "unmatched" :
-      tab === "matched" ? (t.status === "auto-matched" || t.status === "manual-matched") :
+      tab === "matched"   ? (t.status === "auto-matched" || t.status === "manual-matched") :
       t.status === "ignored";
-    const matchesSearch = t.description.toLowerCase().includes(search.toLowerCase()) ||
-      t.reference.toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
+    const matchesAccount =
+      accountFilter === "all" ? true :
+      t.status === "unmatched" ? true :
+      t.matchedAccountType === accountFilter;
+    const matchesSearch =
+      t.description.toLowerCase().includes(search.toLowerCase()) ||
+      t.reference.toLowerCase().includes(search.toLowerCase()) ||
+      (t.matchedAccountName?.toLowerCase().includes(search.toLowerCase()) ?? false);
+    return matchesTab && matchesAccount && matchesSearch;
   });
 
+  const openMatchDialog = (tx: BankTransaction) => {
+    setMatchDialog(tx);
+    setMatchAccountType("company");
+    setSelectedAccount("");
+  };
+
   const handleMatch = async () => {
-    if (!matchDialog || !selectedCompany) return;
+    if (!matchDialog || !selectedAccount) return;
     setMatchLoading(true);
     await new Promise((r) => setTimeout(r, 700));
-    const company = COMPANIES.find((c) => c.id === selectedCompany);
+    const account = ACCOUNTS[matchAccountType].find((a) => a.id === selectedAccount);
     setTransactions((prev) => prev.map((t) =>
       t.id === matchDialog.id
-        ? { ...t, status: "manual-matched" as MatchStatus, matchedCompany: company?.name, matchedCompanyId: selectedCompany }
+        ? { ...t, status: "manual-matched" as MatchStatus, matchedAccountName: account?.name, matchedAccountId: selectedAccount, matchedAccountType: matchAccountType }
         : t
     ));
     setMatchLoading(false);
     setMatchDialog(null);
-    setSelectedCompany("");
+    setSelectedAccount("");
   };
 
-  const handleIgnore = (txId: string) => {
+  const handleIgnore = (txId: string) =>
     setTransactions((prev) => prev.map((t) => t.id === txId ? { ...t, status: "ignored" as MatchStatus } : t));
-  };
 
-  const handleUnmatch = (txId: string) => {
+  const handleUnmatch = (txId: string) =>
     setTransactions((prev) => prev.map((t) =>
-      t.id === txId ? { ...t, status: "unmatched" as MatchStatus, matchedCompany: undefined, matchedCompanyId: undefined } : t
+      t.id === txId ? { ...t, status: "unmatched" as MatchStatus, matchedAccountName: undefined, matchedAccountId: undefined, matchedAccountType: undefined } : t
     ));
-  };
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
+      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Bank Reconciliation</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Match incoming bank transactions to company foundation accounts.
+            Match incoming bank transactions to company and individual Foundation Accounts.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -204,13 +189,13 @@ export function ReconciliationPage() {
         </div>
       </div>
 
-      {/* Summary strip */}
+      {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Statement total",   value: `$${totalIn.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`,   color: "text-foreground",    bg: "bg-white" },
-          { label: "Matched",           value: `$${matchedIn.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, color: "text-emerald-600",   bg: "bg-emerald-50" },
-          { label: "Transactions",      value: `${counts.all}`,                                                        color: "text-foreground",    bg: "bg-white" },
-          { label: "Needs matching",    value: `${counts.unmatched}`,                                                  color: "text-amber-600",     bg: "bg-amber-50" },
+          { label: "Statement total", value: `$${totalIn.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`,   color: "text-foreground",  bg: "bg-white"      },
+          { label: "Matched",         value: `$${matchedIn.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Transactions",    value: `${counts.all}`,                                                        color: "text-foreground",  bg: "bg-white"      },
+          { label: "Needs matching",  value: `${counts.unmatched}`,                                                  color: "text-amber-600",   bg: "bg-amber-50"   },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl ${s.bg} border border-border px-4 py-3`}>
             <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
@@ -219,7 +204,7 @@ export function ReconciliationPage() {
         ))}
       </div>
 
-      {/* Auto-match info banner */}
+      {/* Auto-match banner */}
       {counts.matched > 0 && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
           <Zap className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -229,10 +214,11 @@ export function ReconciliationPage() {
         </div>
       )}
 
-      {/* Main table */}
+      {/* Table */}
       <div className="bg-white rounded-2xl border border-border overflow-hidden">
         {/* Filters */}
         <div className="px-5 py-3 border-b border-border flex items-center gap-3 flex-wrap">
+          {/* Status tabs */}
           <div className="flex items-center gap-1">
             {TABS.map((t) => (
               <button
@@ -253,7 +239,26 @@ export function ReconciliationPage() {
               </button>
             ))}
           </div>
+
+          {/* Account type filter */}
+          <div className="flex items-center gap-1 border-l border-border pl-3">
+            {(["all", "company", "individual"] as AccountFilter[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setAccountFilter(f)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all capitalize ${
+                  accountFilter === f
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                {f === "all" ? "All types" : f === "company" ? "Organisations" : "Individuals"}
+              </button>
+            ))}
+          </div>
+
           <div className="flex-1" />
+
           <div className="relative w-56">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
@@ -287,6 +292,8 @@ export function ReconciliationPage() {
               filtered.map((tx, i) => {
                 const isMatched = tx.status === "auto-matched" || tx.status === "manual-matched";
                 const isIgnored = tx.status === "ignored";
+                const typeConfig = tx.matchedAccountType ? ACCOUNT_TYPE_CONFIG[tx.matchedAccountType] : null;
+                const TypeIcon = typeConfig?.icon;
 
                 return (
                   <motion.div
@@ -302,12 +309,12 @@ export function ReconciliationPage() {
                     {/* Description */}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        {isMatched && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />}
+                        {isMatched  && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />}
                         {!isMatched && !isIgnored && <AlertCircle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
-                        {isIgnored && <X className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
+                        {isIgnored  && <X className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />}
                         <p className="text-sm font-medium text-foreground truncate">{tx.description}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 ml-5.5">
+                      <p className="text-xs text-muted-foreground mt-0.5 pl-5">
                         Ref: {tx.reference} · BSB {tx.bsb} · {tx.accountNo}
                       </p>
                     </div>
@@ -323,17 +330,20 @@ export function ReconciliationPage() {
                     {/* Status / Match */}
                     <div className="hidden md:block">
                       {isMatched ? (
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                              tx.status === "auto-matched"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-blue-100 text-blue-700"
+                              tx.status === "auto-matched" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
                             }`}>
                               {tx.status === "auto-matched" ? "Auto" : "Manual"}
                             </span>
+                            {typeConfig && TypeIcon && (
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 ${typeConfig.className}`}>
+                                <TypeIcon className="w-2.5 h-2.5" /> {typeConfig.label}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-emerald-700 font-medium">{tx.matchedCompany}</p>
+                          <p className="text-xs text-emerald-700 font-medium">{tx.matchedAccountName}</p>
                           {tx.confidence && (
                             <p className="text-[10px] text-muted-foreground">{tx.confidence}% confidence</p>
                           )}
@@ -352,7 +362,7 @@ export function ReconciliationPage() {
                           <Button
                             size="sm"
                             className="h-7 px-2.5 text-xs rounded-lg bg-primary hover:bg-primary/90 text-white"
-                            onClick={() => setMatchDialog(tx)}
+                            onClick={() => openMatchDialog(tx)}
                           >
                             Match
                           </Button>
@@ -367,12 +377,7 @@ export function ReconciliationPage() {
                         </>
                       )}
                       {isMatched && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2.5 text-xs rounded-lg"
-                          onClick={() => handleUnmatch(tx.id)}
-                        >
+                        <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs rounded-lg" onClick={() => handleUnmatch(tx.id)}>
                           Unmatch
                         </Button>
                       )}
@@ -405,18 +410,17 @@ export function ReconciliationPage() {
       </div>
 
       {/* Match Dialog */}
-      <Dialog open={!!matchDialog} onOpenChange={() => { setMatchDialog(null); setSelectedCompany(""); }}>
+      <Dialog open={!!matchDialog} onOpenChange={() => { setMatchDialog(null); setSelectedAccount(""); }}>
         {matchDialog && (
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Match Transaction to Company</DialogTitle>
+              <DialogTitle>Match Transaction to Account</DialogTitle>
               <DialogDescription>
-                Select the company foundation account this bank transaction belongs to.
+                Select the Foundation Account this bank transaction belongs to.
                 Once matched, this bank account will be remembered for future auto-matching.
               </DialogDescription>
             </DialogHeader>
 
-            {/* Transaction summary */}
             <div className="rounded-xl bg-muted/40 border border-border p-3 space-y-1">
               <p className="text-sm font-semibold text-foreground">{matchDialog.description}</p>
               <p className="text-xs text-muted-foreground">Ref: {matchDialog.reference} · {matchDialog.date}</p>
@@ -426,15 +430,39 @@ export function ReconciliationPage() {
               </p>
             </div>
 
+            {/* Account type toggle */}
+            <div className="flex rounded-xl border border-border overflow-hidden">
+              {(["company", "individual"] as AccountType[]).map((type) => {
+                const cfg = ACCOUNT_TYPE_CONFIG[type];
+                const Icon = cfg.icon;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => { setMatchAccountType(type); setSelectedAccount(""); }}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                      matchAccountType === type
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {type === "company" ? "Organisation" : "Individual"}
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Company Foundation Account</label>
-              <Select value={selectedCompany} onValueChange={(v) => setSelectedCompany(v ?? "")}>
+              <label className="text-sm font-medium text-foreground">
+                {matchAccountType === "company" ? "Company" : "Individual"} Foundation Account
+              </label>
+              <Select value={selectedAccount} onValueChange={(v) => setSelectedAccount(v ?? "")}>
                 <SelectTrigger className="rounded-xl h-9 text-sm">
-                  <SelectValue placeholder="Select company…" />
+                  <SelectValue placeholder={matchAccountType === "company" ? "Select company…" : "Select individual…"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {COMPANIES.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  {ACCOUNTS[matchAccountType].map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -448,12 +476,12 @@ export function ReconciliationPage() {
             </div>
 
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => { setMatchDialog(null); setSelectedCompany(""); }} className="flex-1">
+              <Button variant="outline" onClick={() => { setMatchDialog(null); setSelectedAccount(""); }} className="flex-1">
                 Cancel
               </Button>
               <Button
                 onClick={handleMatch}
-                disabled={!selectedCompany || matchLoading}
+                disabled={!selectedAccount || matchLoading}
                 className="flex-1 bg-primary hover:bg-primary/90 text-white"
               >
                 {matchLoading ? (
