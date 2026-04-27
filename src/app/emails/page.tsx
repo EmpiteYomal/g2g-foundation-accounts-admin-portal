@@ -3,71 +3,167 @@
 import { useState } from "react";
 import { NewApplicationNotification } from "./templates/NewApplicationNotification";
 import { CompanyDeclinedEmail } from "./templates/CompanyDeclinedEmail";
+import { CompanyApprovedEmail } from "./templates/CompanyApprovedEmail";
 import { AccountManagerAssignedEmail } from "./templates/AccountManagerAssignedEmail";
 import { FundTransferApprovedEmail } from "./templates/FundTransferApprovedEmail";
 import { FundTransferDeclinedEmail } from "./templates/FundTransferDeclinedEmail";
 import { AdminWelcomeEmail } from "./templates/AdminWelcomeEmail";
-import { Copy, Check, ChevronRight, Mail, Download } from "lucide-react";
+import { InviteAdminUserEmail } from "./templates/InviteAdminUserEmail";
+import { UserPendingConfirmationEmail } from "./templates/UserPendingConfirmationEmail";
+import { UserAccessGrantedEmail } from "./templates/UserAccessGrantedEmail";
+import { ResetPasswordEmail } from "./templates/ResetPasswordEmail";
+import { InviteUserToCompanyPortalEmail } from "./templates/InviteUserToCompanyPortalEmail";
+import { Copy, Check, ChevronRight, Mail, Download, Shield, Building2 } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 // ─── Template registry ────────────────────────────────────────────────────────
 
-const TEMPLATES = [
+type TemplateGroup = {
+  id: string;
+  label: string;
+  icon: typeof Shield;
+  color: string;
+  templates: Template[];
+};
+
+type Template = {
+  id: string;
+  label: string;
+  description: string;
+  trigger: string;
+  recipient: string;
+  subject: string;
+  component: React.ComponentType;
+};
+
+const GROUPS: TemplateGroup[] = [
   {
-    id: "new-application",
-    label: "New Application (Admin)",
-    description: "Sent to the G2G admin team when a company submits a Foundation Account application.",
-    trigger: "Company submits application",
-    recipient: "Admin team (ops@goodstack.io)",
-    subject: "[Admin] New Foundation Account application — Woolworths Group",
-    component: NewApplicationNotification,
+    id: "admin",
+    label: "Admin Portal",
+    icon: Shield,
+    color: "#f97316",
+    templates: [
+      {
+        id: "new-application",
+        label: "New Application Notification",
+        description: "Sent to the G2G admin team when a company submits a Foundation Account application.",
+        trigger: "Company submits application",
+        recipient: "Admin team (ops@goodstack.io)",
+        subject: "[Admin] New Foundation Account application — Woolworths Group",
+        component: NewApplicationNotification,
+      },
+      {
+        id: "admin-invite",
+        label: "Invite Admin User",
+        description: "Sent to new Goodstack staff when invited to the admin portal. Uses a one-click setup link to set their own password.",
+        trigger: "Super admin invites new staff member",
+        recipient: "Newly invited admin user",
+        subject: "You've been invited to the Goodstack admin portal",
+        component: InviteAdminUserEmail,
+      },
+      {
+        id: "admin-welcome",
+        label: "Admin Welcome (Temp Password)",
+        description: "Sent to new Goodstack staff when added to the admin portal with a temporary password.",
+        trigger: "Admin invites new staff member",
+        recipient: "Newly invited admin user",
+        subject: "You've been added to the Goodstack admin portal",
+        component: AdminWelcomeEmail,
+      },
+    ],
   },
   {
-    id: "company-declined",
-    label: "Company Declined",
-    description: "Sent to the company when their Foundation Account application is declined.",
-    trigger: "Admin declines application",
-    recipient: "Company primary contact",
-    subject: "Update on your Foundation Account application",
-    component: CompanyDeclinedEmail,
-  },
-  {
-    id: "account-manager-assigned",
-    label: "Account Manager Assigned",
-    description: "Sent to the company when an account manager is assigned to their account.",
-    trigger: "Admin assigns account manager",
-    recipient: "Company primary contact",
-    subject: "Meet your Good2Give account manager",
-    component: AccountManagerAssignedEmail,
-  },
-  {
-    id: "transfer-approved",
-    label: "Fund Transfer Approved",
-    description: "Sent when an admin approves a disbursement and generates the ABA file.",
-    trigger: "Admin approves & generates ABA",
-    recipient: "Company primary contact + all users",
-    subject: "Fund transfer approved — funds are on their way",
-    component: FundTransferApprovedEmail,
-  },
-  {
-    id: "transfer-declined",
-    label: "Fund Transfer Declined",
-    description: "Sent when an admin declines a fund disbursement request.",
-    trigger: "Admin declines transfer",
-    recipient: "Company primary contact + all users",
-    subject: "Your fund transfer request has been declined",
-    component: FundTransferDeclinedEmail,
-  },
-  {
-    id: "admin-welcome",
-    label: "Admin Welcome",
-    description: "Sent to new Goodstack staff members when they are added to the admin portal.",
-    trigger: "Admin invites new staff member",
-    recipient: "Newly invited admin user",
-    subject: "You've been added to the Goodstack admin portal",
-    component: AdminWelcomeEmail,
+    id: "customer",
+    label: "Customer Portal",
+    icon: Building2,
+    color: "#f97316",
+    templates: [
+      {
+        id: "user-pending-confirmation",
+        label: "Pending Email Confirmation",
+        description: "Sent when a user registers on the customer portal and needs to verify their email address before their account is activated.",
+        trigger: "User registers on customer portal",
+        recipient: "Newly registered user",
+        subject: "Confirm your email address — Good2Give",
+        component: UserPendingConfirmationEmail,
+      },
+      {
+        id: "invite-user-company",
+        label: "Invite User to Company Portal",
+        description: "Sent when a company admin invites a colleague to join their Foundation Account on the customer portal.",
+        trigger: "Company admin invites a colleague",
+        recipient: "Invited user",
+        subject: "Mark Davies has invited you to join Woolworths Group's Foundation Account",
+        component: InviteUserToCompanyPortalEmail,
+      },
+      {
+        id: "user-access-granted",
+        label: "User Access Granted",
+        description: "Sent when a company admin grants a user access to their Foundation Account.",
+        trigger: "Company admin grants user access",
+        recipient: "User receiving access",
+        subject: "You now have access to Woolworths Group's Foundation Account",
+        component: UserAccessGrantedEmail,
+      },
+      {
+        id: "reset-password",
+        label: "Reset Password",
+        description: "Sent when a user requests a password reset from the login page. Works for both admin and customer portal users.",
+        trigger: "User requests password reset",
+        recipient: "The requesting user",
+        subject: "Reset your password — Good2Give",
+        component: ResetPasswordEmail,
+      },
+      {
+        id: "company-approved",
+        label: "Application Approved",
+        description: "Sent to the company when their Foundation Account application is approved.",
+        trigger: "Admin approves application",
+        recipient: "Company primary contact",
+        subject: "Your Foundation Account application has been approved",
+        component: CompanyApprovedEmail,
+      },
+      {
+        id: "company-declined",
+        label: "Application Declined",
+        description: "Sent to the company when their Foundation Account application is declined.",
+        trigger: "Admin declines application",
+        recipient: "Company primary contact",
+        subject: "Update on your Foundation Account application",
+        component: CompanyDeclinedEmail,
+      },
+      {
+        id: "account-manager-assigned",
+        label: "Account Manager Assigned",
+        description: "Sent to the company when an account manager is assigned to their account.",
+        trigger: "Admin assigns account manager",
+        recipient: "Company primary contact",
+        subject: "Meet your Good2Give account manager",
+        component: AccountManagerAssignedEmail,
+      },
+      {
+        id: "transfer-approved",
+        label: "Fund Transfer Approved",
+        description: "Sent when an admin approves a disbursement and generates the ABA file.",
+        trigger: "Admin approves & generates ABA",
+        recipient: "Company primary contact + all users",
+        subject: "Fund transfer approved — funds are on their way",
+        component: FundTransferApprovedEmail,
+      },
+      {
+        id: "transfer-declined",
+        label: "Fund Transfer Declined",
+        description: "Sent when an admin declines a fund disbursement request.",
+        trigger: "Admin declines transfer",
+        recipient: "Company primary contact + all users",
+        subject: "Your fund transfer request has been declined",
+        component: FundTransferDeclinedEmail,
+      },
+    ],
   },
 ];
+
+const ALL_TEMPLATES = GROUPS.flatMap((g) => g.templates);
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -76,7 +172,7 @@ export default function EmailTemplatesPage() {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "html">("preview");
 
-  const template = TEMPLATES.find((t) => t.id === selected)!;
+  const template = ALL_TEMPLATES.find((t) => t.id === selected)!;
   const Component = template.component;
 
   const getHtml = () => {
@@ -106,6 +202,8 @@ export default function EmailTemplatesPage() {
     URL.revokeObjectURL(url);
   };
 
+  const totalCount = ALL_TEMPLATES.length;
+
   return (
     <div className="min-h-screen bg-[#F5F4F2] flex flex-col" style={{ fontFamily: "system-ui, sans-serif" }}>
       {/* Top bar */}
@@ -116,7 +214,7 @@ export default function EmailTemplatesPage() {
           </div>
           <div>
             <span className="text-sm font-semibold text-gray-900">Email Templates</span>
-            <span className="ml-2 text-xs text-gray-400">Goodstack Admin Portal</span>
+            <span className="ml-2 text-xs text-gray-400">Goodstack · Admin &amp; Customer Portal</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -158,29 +256,49 @@ export default function EmailTemplatesPage() {
         <aside className="w-72 flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto">
           <div className="px-4 pt-5 pb-2">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              {TEMPLATES.length} Templates
+              {totalCount} Templates
             </p>
           </div>
-          <nav className="px-2 pb-4 space-y-0.5">
-            {TEMPLATES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setSelected(t.id)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-center justify-between group ${
-                  selected === t.id
-                    ? "bg-orange-50 text-orange-700"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{t.label}</p>
-                  <p className="text-xs text-gray-400 truncate mt-0.5">{t.trigger}</p>
+
+          <nav className="px-2 pb-4">
+            {GROUPS.map((group) => {
+              const Icon = group.icon;
+              return (
+                <div key={group.id} className="mb-4">
+                  {/* Group header */}
+                  <div className="flex items-center gap-2 px-3 py-2 mb-1">
+                    <div className="w-5 h-5 rounded-md bg-orange-50 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-3 h-3 text-orange-500" />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{group.label}</span>
+                    <span className="ml-auto text-[10px] font-semibold text-gray-300 tabular-nums">{group.templates.length}</span>
+                  </div>
+
+                  {/* Templates */}
+                  <div className="space-y-0.5">
+                    {group.templates.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelected(t.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors flex items-center justify-between group ${
+                          selected === t.id
+                            ? "bg-orange-50 text-orange-700"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{t.label}</p>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">{t.trigger}</p>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 ml-2 transition-colors ${
+                          selected === t.id ? "text-orange-500" : "text-gray-300 group-hover:text-gray-400"
+                        }`} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <ChevronRight className={`w-3.5 h-3.5 flex-shrink-0 ml-2 transition-colors ${
-                  selected === t.id ? "text-orange-500" : "text-gray-300 group-hover:text-gray-400"
-                }`} />
-              </button>
-            ))}
+              );
+            })}
           </nav>
 
           {/* Template meta */}
